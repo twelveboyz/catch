@@ -15,6 +15,5 @@ const (
 	CloudPool                  = "归属云池"
 	PublicCloudServiceProvider = "公有云服务商"
 	Node                       = "节点"
-	NodeName                   = "节点名称"
 	AvailabilityZone           = "可用区"
 )

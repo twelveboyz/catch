@@ -2,134 +2,81 @@ package cmdb
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"github.com/xuri/excelize/v2"
 	"log"
 	"strings"
 )
 
-// WriteToResultExcel 传参说明：xlsxFileName=xlsx的文件名称，n是传入需要写入的文件目前有多少行，sliceMap是聚合所有必要的值
-func (e *Excel) writeToResultExcel(n int, resourceCountInfos []ResourceCountInfo) {
-	var num = new(int)
-	var externalNum = new(int)
+// AutoXlsx 传参说明：xlsxFileName=xlsx的文件名称，n是传入需要写入的文件目前有多少行，sliceMap是聚合所有必要的值
+func (e *Excel) AutoXlsx(xlsxFileName string, n int, sliceMap []map[string]string) {
 
-	for i, rci := range resourceCountInfos {
-		*num = i + 1 + n + *externalNum
-		cell := fmt.Sprintf("A%d", *num)
-
-		e.WriteCompute(cell, rci)
-		e.WriteSystemDisk(num, externalNum, rci)
-		e.WriteCloudStorage(cell, rci)
-		e.WriteCloudNetwork(cell, rci)
-		e.WriteCloudPaaS(cell, rci)
-
-	}
-
-	err := e.File.SaveAs(e.Filename)
+	// 创建一个新的工作簿。
+	f, err := excelize.OpenFile(xlsxFileName)
 	if err != nil {
-		log.Println(err)
+		log.Println("打开文件失败", err)
 	}
-}
-
-func (e *Excel) WriteCompute(cell string, rci ResourceCountInfo) {
-	resourceCategory := rci.resourceCategory
-	_ = rci.resourceSubcategory
-
-	if resourceCategory == "弹性计算" || resourceCategory == "KCS" {
-
-		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", "", rci.Counts})
-		if err != nil {
-			logrus.Errorf("WriteCompute %s写入数据失败：%v", cell, err)
-			return
+	defer func() {
+		if err = f.Close(); err != nil {
+			log.Println("关闭xlsx文件失败", err)
 		}
+	}()
 
-		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", "", rci.Counts)
-	}
+	// 使用默认的工作表 Sheet1。
+	sheetName := "Sheet1"
 
-}
+	for i := 0; i < len(sliceMap); i++ {
+		cell := fmt.Sprintf("A%v", i+n+1)
+		switch e.ResourceType {
+		case "计算资源":
+			err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], sliceMap[i]["AvailabilityZone"], sliceMap[i]["ResourceCategory"], sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "个", sliceMap[i]["Counts"]})
 
-func (e *Excel) WriteSystemDisk(num, externalNum *int, rci ResourceCountInfo) {
-	resourceCategory := rci.resourceCategory
-	_ = rci.resourceSubcategory
+		case "系统盘资源":
+			err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], sliceMap[i]["AvailabilityZone"], "云存储", "云硬盘", sliceMap[i]["SystemDiskSpecification"], "GB", sliceMap[i]["SystemDiskCapacity"], sliceMap[i]["Counts"], "系统盘"})
 
-	if resourceCategory == "弹性计算" || resourceCategory == "KCS" {
-		*externalNum++
-		*num++
-		nCell := fmt.Sprintf("A%d", *num)
+		case "存储资源":
+			if sliceMap[i]["ResourceSubcategory"] == "对象存储" {
+				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], sliceMap[i]["AvailabilityZone"], sliceMap[i]["ResourceCategory"], sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "GB", sliceMap[i]["SingleCapacity"], sliceMap[i]["Counts"]})
 
-		err := e.File.SetSheetRow(e.Sheet, nCell, &[]interface{}{rci.CloudPool, rci.NodeName, "", "云存储", "云硬盘", rci.comment, "GB", rci.Capacity, rci.Counts, "系统盘"})
-		if err != nil {
-			logrus.Errorf("WriteSystemDisk %s写入数据失败：%v", nCell, err)
-			return
-		}
+			} else {
+				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], sliceMap[i]["AvailabilityZone"], sliceMap[i]["ResourceCategory"], sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "GB", sliceMap[i]["Capacity"], sliceMap[i]["Counts"]})
 
-		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v, %v, %v\n", nCell, rci.CloudPool, rci.NodeName, "", "云存储", "云硬盘", rci.comment, "GB", rci.Capacity, rci.Counts, "系统盘")
+			}
 
-	}
+		case "网络资源":
+			//主要处理网络资源中有些是没有规格的，如果没有规格则判断规格如果是NF则不打印规格的字段
+			if strings.Contains(sliceMap[i]["Specification"], "NF") {
+				sliceMap[i]["Specification"] = ""
+			}
+			if strings.Contains(sliceMap[i]["Bandwidth"], "NF") || sliceMap[i]["Bandwidth"] == "" {
+				sliceMap[i]["Bandwidth"] = ""
+			} else {
+				sliceMap[i]["Bandwidth"] = fmt.Sprintf("%s Mbps", sliceMap[i]["Bandwidth"])
+			}
+			err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], "", sliceMap[i]["ResourceCategory"], sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "个", sliceMap[i]["Counts"], "", sliceMap[i]["Bandwidth"]})
 
-}
+		case "安全资源":
+			if sliceMap[i]["ResourceCategory"] == "NF" {
+				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], "", "云安全", sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "个", sliceMap[i]["Counts"]})
+			} else {
 
-func (e *Excel) WriteCloudStorage(cell string, rci ResourceCountInfo) {
+				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], "", sliceMap[i]["ResourceCategory"], sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "个", sliceMap[i]["Counts"]})
+			}
 
-	resourceCategory := rci.resourceCategory
-	resourceSubcategory := rci.resourceSubcategory
-
-	if resourceCategory == "云存储" {
-		var err error
-		if strings.Contains(resourceSubcategory, "对象存储") {
-			err = e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "GB", rci.SingleCapacity, rci.Counts, rci.comment})
-
-		} else {
-			err = e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "GB", rci.Capacity, rci.Counts})
-
+		case "PAAS资源":
+			err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], sliceMap[i]["AvailabilityZone"], sliceMap[i]["ResourceCategory"], sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "个", sliceMap[i]["Counts"]})
+		default:
+			log.Println("写入数据时没找到对应资源")
 		}
 
 		if err != nil {
-			logrus.Errorf("WriteCloudStorage %s写入数据失败：%v", cell, err)
-			return
+			log.Println("填写失败", err)
 		}
 
-		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "GB", rci.Capacity, rci.Counts)
-	}
-
-}
-
-func (e *Excel) WriteCloudNetwork(cell string, rci ResourceCountInfo) {
-	resourceCategory := rci.resourceCategory
-	_ = rci.resourceSubcategory
-
-	if resourceCategory == "云网络" {
-		if rci.comment == "NF" || rci.comment == "NFI" {
-			rci.comment = ""
-		}
-		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts, "", rci.comment})
+		err = f.SaveAs(xlsxFileName)
 		if err != nil {
-			logrus.Errorf("WriteCloudNetwork %s写入数据失败：%v", cell, err)
-			return
+			log.Println(err)
 		}
-
-		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts, "", rci.comment)
-
 	}
-
-}
-
-func (e *Excel) WriteCloudPaaS(cell string, rci ResourceCountInfo) {
-	resourceCategory := rci.resourceCategory
-	_ = rci.resourceSubcategory
-
-	if resourceCategory == "云PAAS" {
-
-		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts})
-		if err != nil {
-			logrus.Errorf("WriteCloudPaaS %s写入数据失败：%v", cell, err)
-			return
-		}
-
-		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts)
-
-	}
-
 }
 
 /*-------------------------------------------------------------------------------------------------*/
