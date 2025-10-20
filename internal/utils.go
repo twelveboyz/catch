@@ -153,17 +153,6 @@ func InputRoot() string {
 	}
 }
 
-func UserInputRoot() (string, string) {
-	root := InputRoot()
-	projectName := RegexFunc(RegexStr, root)
-	if projectName == "" {
-		projectName = RegexFunc(RegexHorizontalBar, root)
-		projectName = strings.Replace(projectName, "-", "_", 1)
-	}
-
-	return root, projectName
-}
-
 func InputChoose() string {
 	for {
 		inputReader := bufio.NewReader(os.Stdin)
@@ -256,14 +245,14 @@ func Prompt(p string) {
 func Tip() {
 	fmt.Println(`
 |------------------------------------------------------------------------------------------------------------------|
-|version: 1.6.1
+|version: 1.5.12
 |注意事项：                                                                                 
 |一、目录名称命名需要按照"项目ID_项目名称"，命名例子:                                               
 |    - C284_短信平台黑名单模块资源扩容需                                                        
 |    - 移动云-C284_短信平台黑名单模块资源扩容需求-交维材料                                         
 |二、自动抓取Excel表格内容是根据文件夹和文件名称抓取
 |    1.统计本批次交维信息
-|    - 目录名称要包含: "CMDB录入表" , 文件名称要包含: "资源录入模板"        
+|    - 目录名称要包含: "CMDB录入表" , 文件名称要包含: "计算资源"、"存储资源"、"网络"、"安全"、"PAAS"          
 |    2.汇总本次建设摘要
 |    - 文件名称要包含: "计算资源"、"存储资源"、"网络"、"安全"、"PAAS"
 |    3.汇总本次建设信息
