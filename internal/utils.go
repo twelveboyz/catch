@@ -153,6 +153,17 @@ func InputRoot() string {
 	}
 }
 
+func UserInputRoot() (string, string) {
+	root := InputRoot()
+	projectName := RegexFunc(RegexStr, root)
+	if projectName == "" {
+		projectName = RegexFunc(RegexHorizontalBar, root)
+		projectName = strings.Replace(projectName, "-", "_", 1)
+	}
+
+	return root, projectName
+}
+
 func InputChoose() string {
 	for {
 		inputReader := bufio.NewReader(os.Stdin)
@@ -245,7 +256,7 @@ func Prompt(p string) {
 func Tip() {
 	fmt.Println(`
 |------------------------------------------------------------------------------------------------------------------|
-|version: 1.5.12
+|version: 1.6.1
 |注意事项：                                                                                 
 |一、目录名称命名需要按照"项目ID_项目名称"，命名例子:                                               
 |    - C284_短信平台黑名单模块资源扩容需                                                        
