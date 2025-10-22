@@ -37,13 +37,13 @@ func (e *Excel) WriteCompute(cell string, rci ResourceCountInfo) {
 
 	if resourceCategory == "弹性计算" || resourceCategory == "KCS" {
 
-		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", "", rci.Counts})
+		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts})
 		if err != nil {
 			logrus.Errorf("WriteCompute %s写入数据失败：%v", cell, err)
 			return
 		}
 
-		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", "", rci.Counts)
+		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts)
 	}
 
 }
