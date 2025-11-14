@@ -7,7 +7,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -98,7 +97,7 @@ func Get(url string, header map[string]string) string {
 		}
 
 		/*	total := gjson.Get(bodyStr, "body.total").Int()
-			log.Println("total:", total)*/
+			logrus.Println("total:", total)*/
 
 		//fmt.Println(bodyStr)
 
@@ -132,7 +131,7 @@ func Post(url string, header map[string]string, payload io.Reader) string {
 
 	statusCode := gjson.Get(bodyStr, "errorCode").String()
 	if statusCode != "" {
-		log.Println("http返回信息有误：", response.StatusCode, bodyStr)
+		logrus.Println("http返回信息有误：", response.StatusCode, bodyStr)
 	}
 
 	//fmt.Println(bodyStr)
@@ -165,11 +164,11 @@ func GetTotal(url string, header map[string]string) int64 {
 
 	statusCode := gjson.Get(bodyStr, "errorCode").String()
 	if statusCode != "" {
-		log.Println("http返回信息有误：", response.StatusCode, bodyStr)
+		logrus.Println("http返回信息有误：", response.StatusCode, bodyStr)
 	}
 
 	total := gjson.Get(bodyStr, "body.total").Int()
-	//log.Println("total:", total)
+	//logrus.Println("total:", total)
 
 	//fmt.Println(bodyStr)
 

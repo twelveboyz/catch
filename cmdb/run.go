@@ -3,13 +3,20 @@ package cmdb
 import (
 	"Catch/internal"
 	"fmt"
-	"log"
+	"github.com/sirupsen/logrus"
 )
 
 func Run() {
 	//手动输入相应的目录路径
-
 	root, projectName := internal.UserInputRoot()
+
+	//日志
+	logfile := internal.LogFunc(root)
+	defer func() {
+		if err := logfile.Close(); err != nil {
+			logrus.Warnln("close log error:", err)
+		}
+	}()
 
 	//定义临时目录和统计表格名称
 	temp := "temp"
@@ -19,70 +26,39 @@ func Run() {
 	//创建临时目录并把项目复制到临时目录中
 	err := internal.CreateTempDirAndCopy(root, temp)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		return
 	}
 
 	defer func() {
-		err = internal.MoveFile(countExcel, root+projectFile)
+		err = internal.MoveAndClearFile(countExcel, root+projectFile, temp)
 		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		err = internal.CleanTempDir(temp)
-		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 			return
 		}
 	}()
 
-	//创建一个新的excel表格
-	err = CreateXlsx(countExcel)
-	if err != nil {
-		log.Println(err)
-		return
-	}
+	//初始化统计表格
+	initCountExcelFile(countExcel, projectName)
 
-	//打印
-	messages := internal.InputMessages()
-	//插入excel表格表头数据
-	Insert(countExcel, projectName, messages)
-
-	//日志
-	logfile := internal.LogFunc(root)
-	defer func() {
-		if err := logfile.Close(); err != nil {
-			log.Println("关闭日志文件失败")
-		}
-	}()
-
-	log.Println("------ start CMDB ------")
 	/*-------------------------------------------资源录入模板-------------------------------------------------*/
-	fileName := internal.CMDBFilterFileName(root, "CMDB录入表", "资源录入模板")
+	fileName := internal.CMDBFilterFileName(root, "资源录入表", []string{"资源录入", "资源录入表"})
 
 	if fileName != "" {
-		excel := NewExcel(fileName, "资源录入")
+		resourceEntryExcel := NewExcel(fileName, SheetResourceEntry)
 
 		resultExcel := NewExcel(countExcel, "Sheet1")
-		resultExcel.GenerateStatisticalFile(countExcel, excel.ResourceStatistics())
+		resultExcel.GenerateStatisticalData(countExcel, resourceEntryExcel.ResourceStatistics())
 
 	} else {
-		internal.Prompt("资源录入模板")
+		internal.Prompt("资源录入表")
 	}
 
 	/*--------------------------------------------设置单格式------------------------------------------------*/
 	//自动设置列宽
-
-	// 10 是列的长度，10 = J
-	for i := 0; i < 10; i++ {
-		var runeLetter = 'A' + int32(i)              //每次循环A+1 = B +1  = C
-		AutoWidth(countExcel, string(runeLetter), i) //colStr = A 那colInt 必须等于0
-	}
+	AutoWidth(countExcel)
 	//自动设置边框
 	SetCollStyle(countExcel)
-
 	/*----------------------------------------------end---------------------------------------------------*/
-	log.Printf("已在项目目录下生成\"%v\"\n", countExcel)
-	log.Println("------ end ------\n")
+
 }

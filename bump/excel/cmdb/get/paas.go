@@ -1,6 +1,6 @@
 package get
 
-import "log"
+import "github.com/sirupsen/logrus"
 
 type PAASResource struct {
 	ResourceID          string
@@ -23,7 +23,7 @@ type PAASResource struct {
 func (e *Excel) ParsePaaSResourceToStruct() []PAASResource {
 	rows, err := e.File.GetRows(e.Sheet)
 	if err != nil {
-		log.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
+		logrus.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
 	}
 
 	//行内容长度不统一，填充为一样的长度

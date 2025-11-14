@@ -4,7 +4,6 @@ import (
 	"Catch/internal"
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"log"
 	"regexp"
 	"sort"
 	"strconv"
@@ -52,29 +51,14 @@ func TotalResource(set Set) [][]string {
 	aggregatedResources := make(map[string]*AggregatedData)
 
 	for i := 0; i < len(set.ResourceCategory); i++ {
-		var key string
-		node := strings.Replace(set.Node[i], "_", "", 1)
+		node := strings.Replace(set.Node[i], "_", "", 1) //去掉节点前的下划线
 		resourceCategory := set.ResourceCategory[i]
 		cloudPoolAndResourceSubcategory := set.ResourceSubcategory[i]
 		specification := set.Specification[i]
 		comment := set.Comments[i]
 
-		switch resourceCategory {
-		case "弹性计算", "KCS":
-			systemDiskSpec := regexp.MustCompile(`\p{Han}+`).FindString(comment)
-			key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, systemDiskSpec)
-		case "云存储":
-			if strings.Contains(cloudPoolAndResourceSubcategory, "对象存储") {
-				sharedBucket := regexp.MustCompile(`共享桶`).FindString(comment)
-				key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, sharedBucket)
-			} else {
-				key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, "")
-			}
-		case "云网络":
-			key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, comment)
-		default:
-			key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, "")
-		}
+		// 1. 组合 key
+		key := CombinationKey(node, resourceCategory, cloudPoolAndResourceSubcategory, specification, comment)
 
 		// 如果 key 不存在于 map 中，则初始化它，并使用指针 //key是全部参数组成的key，value是int,map[string]int 类型
 		if _, exists := aggregatedResources[key]; !exists {
@@ -86,38 +70,74 @@ func TotalResource(set Set) [][]string {
 			}
 		}
 
+		// 2.根据资源大类进行不同的统计处理
 		// 简单说就是将Key组合在一起变成一个Set集合，value是统计同类型的个数，和统计规格和每个规格的个数
-		// 增加totalCount计数
 		classifiedStatistics(resourceCategory, comment, aggregatedResources, key)
 	}
 
+	//AddECSSystemDiskCount(aggregatedResources)
+
 	return splitKey(aggregatedResources)
+}
+
+// CombinationKey 1. 组合 key
+func CombinationKey(node, resourceCategory, cloudPoolAndResourceSubcategory, specification, comment string) string {
+	var key string
+
+	switch resourceCategory {
+	case "弹性计算", "KCS":
+		key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, "")
+	case "云存储-系统盘":
+		key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, "")
+	case "云存储":
+		if strings.Contains(cloudPoolAndResourceSubcategory, "对象存储") {
+			sharedBucket := regexp.MustCompile(`共享桶`).FindString(comment)
+			key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, sharedBucket)
+		} else {
+			key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, "")
+		}
+	case "云网络":
+		key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, comment)
+	default:
+		key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, "")
+	}
+
+	return key
+
 }
 
 // classifiedStatistics 根据资源大类进行不同的统计处理
 func classifiedStatistics(resourceCategory, comment string, aggregatedResources map[string]*AggregatedData, key string) {
 	//获取注释中的数字
-	comment = regexp.MustCompile("[0-9]*").FindString(comment)
+	s := regexp.MustCompile(`[(（].*[）)]`).ReplaceAllString(comment, "")
+	comment = regexp.MustCompile(`\d+`).FindString(s)
 
 	//根据资源大类进行不同的统计处理
 	switch resourceCategory {
 	case "弹性计算", "KCS":
 		aggregatedResources[key].totalCounts++
+	/*	capInt, err := strconv.Atoi(comment)
+		if err != nil {
+			logrus.Println("CapInt获取Atoi转换失败", err)
+		}
+		//统计相同小类的总容量
+		aggregatedResources[key].capacityCounts = aggregatedResources[key].capacityCounts + capInt*/
+	case "云存储-系统盘":
+		aggregatedResources[key].totalCounts++
 
 		capInt, err := strconv.Atoi(comment)
 		if err != nil {
-			log.Println("CapInt获取Atoi转换失败", err)
+			logrus.Warnln("CapInt获取Atoi转换失败", err)
 		}
 		//统计相同小类的总容量
 		aggregatedResources[key].capacityCounts = aggregatedResources[key].capacityCounts + capInt
-
 	case "云存储":
 		aggregatedResources[key].totalCounts++
 
 		//统计存储相同类型的总量
 		capInt, err := strconv.Atoi(comment)
 		if err != nil {
-			log.Println("CapInt获取Atoi转换失败", err)
+			logrus.Println("CapInt获取Atoi转换失败", err)
 		}
 
 		//统计相同小类的总容量
@@ -134,7 +154,7 @@ func splitKey(aggregatedResources map[string]*AggregatedData) [][]string {
 	//第二步、拆分Key，并且把拆分的Key和Counts、spec都加入到一个[][]string切片中
 	countSlice := make([][]string, 0, len(aggregatedResources))
 
-	fmt.Println(len(aggregatedResources), "aggregatedResources=", aggregatedResources)
+	//fmt.Println(len(aggregatedResources), "aggregatedResources=", aggregatedResources)
 
 	//将map中的key排序，排序规则是根据资源大类的权重
 	keys := sortKey(aggregatedResources)
@@ -143,7 +163,7 @@ func splitKey(aggregatedResources map[string]*AggregatedData) [][]string {
 	for _, k := range keys {
 		data, ok := aggregatedResources[k]
 		if !ok {
-			logrus.Errorf("splitKey函数获取aggregatedResources[%v]失败", k)
+			logrus.Warnf("splitKey函数获取aggregatedResources[%v]失败\n", k)
 			continue
 		}
 
@@ -170,7 +190,7 @@ func splitKey(aggregatedResources map[string]*AggregatedData) [][]string {
 
 	// 打印结果以验证
 	for _, slice := range countSlice {
-		log.Println("totalResource函数打印结果：", slice)
+		logrus.Println("totalResource函数打印结果：", slice)
 	}
 	return countSlice
 }
@@ -181,7 +201,7 @@ func sortKey(aggregatedResources map[string]*AggregatedData) []string {
 		items = append(items, k)
 	}
 
-	keywords := []string{"弹性计算", "云存储", "云网络", "云PAAS"}
+	keywords := []string{"弹性计算", "KCS", "云存储-系统盘", "云存储", "云网络", "云PAAS"}
 
 	sort.Slice(items, func(i, j int) bool {
 		scoreI := calculateScore(items[i], keywords)
@@ -212,7 +232,7 @@ func calculateScore(s string, keywords []string) int {
 	return len(keywords)
 }
 
-func splitCloudPortAndResourceSubcategory(cloudPoolAndResourceSubcategory string) (string, string) {
+func SplitCloudPortAndResourceSubcategory(cloudPoolAndResourceSubcategory string) (string, string) {
 	//拆分云池，资源小类
 	var cloudpool, resourceSubcategory string
 	split := strings.Split(cloudPoolAndResourceSubcategory, "-")
@@ -220,7 +240,7 @@ func splitCloudPortAndResourceSubcategory(cloudPoolAndResourceSubcategory string
 		cloudpool = split[0]
 		resourceSubcategory = split[1]
 	} else {
-		logrus.Errorf("格式错误无法拆分:%v", cloudPoolAndResourceSubcategory)
+		logrus.Warnf("格式错误无法拆分:%v\n", cloudPoolAndResourceSubcategory)
 	}
 
 	return cloudpool, resourceSubcategory
@@ -232,7 +252,7 @@ func slicesToStruct(slices [][]string) []ResourceCountInfo {
 		nodeName := slice[0]
 		resourceCategory := slice[1]
 		cloudPoolAndResourceSubcategory := slice[2]
-		cloudPool, resourceSubcategory := splitCloudPortAndResourceSubcategory(cloudPoolAndResourceSubcategory)
+		cloudPool, resourceSubcategory := SplitCloudPortAndResourceSubcategory(cloudPoolAndResourceSubcategory)
 		specification := slice[3]
 		comment := slice[4]
 		counts := slice[5]
@@ -271,5 +291,22 @@ func ShareBucket(aggregatedResources map[string]*AggregatedData, k, comment stri
 		}
 	} else {
 		aggregatedResources[k].SingleCapacity = aggregatedResources[k].capacityCounts
+	}
+}
+
+func AddECSSystemDiskCount(aggregatedResources map[string]*AggregatedData) {
+	com := "弹性计算"
+	kcs := "KCS"
+
+	replace := "计算资源-系统盘"
+	for k, v := range aggregatedResources {
+		if strings.Contains(k, com) && !strings.Contains(k, replace) {
+			newK := strings.Replace(k, com, replace, 1)
+			aggregatedResources[newK] = v
+
+		} else if strings.Contains(k, kcs) && !strings.Contains(k, replace) {
+			newK := strings.Replace(k, kcs, replace, 1)
+			aggregatedResources[newK] = v
+		}
 	}
 }

@@ -6,13 +6,12 @@ import (
 	"Catch/bump/internal/utils"
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"log"
 	"strings"
 )
 
 func ExecuteALL() []*ECloudServer {
 	Body := utils.Get(Url, Headers)
-	//log.Println(Body)
+	//logrus.Println(Body)
 
 	InfoSet := JsonParseResourceInfoALL(Body)
 	//JsonParseResourceNetworkInfoByPools(InfoSet,pool)
@@ -22,22 +21,22 @@ func ExecuteALL() []*ECloudServer {
 	}
 
 	for i, info := range InfoSet {
-		log.Println("循环次数：", i+1)
-		log.Println(info.Id, info.Name, info.Region, info.SpecsName, info.ImageName, info.ImageOsType, info.VCpu, info.VMemory, info.VDisk)
+		logrus.Println("循环次数：", i+1)
+		logrus.Println(info.Id, info.Name, info.Region, info.SpecsName, info.ImageName, info.ImageOsType, info.VCpu, info.VMemory, info.VDisk)
 
 		for _, nic := range info.NIC {
-			log.Println(nic.Id, nic.Name, nic.Type, nic.ResourceId, nic.NetworkId)
+			logrus.Println(nic.Id, nic.Name, nic.Type, nic.ResourceId, nic.NetworkId)
 
 			for _, fixedIp := range nic.FixedIp {
-				log.Println(fixedIp)
+				logrus.Println(fixedIp)
 			}
 
 			for _, securityGroup := range nic.SecurityGroup {
-				log.Println(securityGroup)
+				logrus.Println(securityGroup)
 			}
-			log.Println()
+			logrus.Println()
 		}
-		log.Println()
+		logrus.Println()
 	}
 
 	logrus.Println("云主机共发起请求：", len(InfoSet))
@@ -71,7 +70,7 @@ func ExecuteMatchByName() {
 	for _, pool := range bootstrap.PoolIDs {
 		Body := utils.Get(Url, HeadersFun(pool))
 		//fmt.Println(HeadersFun(pool))
-		//log.Println(Body)
+		//logrus.Println(Body)
 
 		infoSet := JsonParseResourceInfoALL(Body)
 

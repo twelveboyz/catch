@@ -2,7 +2,7 @@ package config
 
 import (
 	"Catch/internal"
-	"log"
+	"github.com/sirupsen/logrus"
 )
 
 func Run() {
@@ -16,21 +16,20 @@ func Run() {
 	//创建临时目录并把项目复制到临时目录中
 	err := internal.CreateTempDirAndCopy(root, temp)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		return
 	}
-
 
 	defer func() {
 		err = internal.MoveFile(countXlsx, dest)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 			return
 		}
 
 		err = internal.CleanTempDir(temp)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 			return
 		}
 	}()
@@ -45,7 +44,7 @@ func Run() {
 	logfile := internal.LogFunc(root)
 	defer func() {
 		if err := logfile.Close(); err != nil {
-			log.Println("关闭日志文件失败")
+			logrus.Println("关闭日志文件失败")
 		}
 	}()
 
@@ -59,15 +58,15 @@ func Run() {
 		f := comPutExcel.OpenFile()
 		defer func() {
 			if err := f.Close(); err != nil {
-				log.Fatal("文件关闭失败", err)
+				logrus.Fatal("文件关闭失败", err)
 			}
 		}()
 
 		//获取表格所有的sheet
 		sheets := comPutExcel.ForGetSheet(f)
-		log.Println("获取有效的Sheet=", sheets)
+		logrus.Println("获取有效的Sheet=", sheets)
 		for _, sheet := range sheets {
-			log.Println("sheet=", sheet)
+			logrus.Println("sheet=", sheet)
 			LineInt := DetermineCase(ComPutFileName, sheet)
 			comPutExcel.CopyLine = LineInt
 			comPutExcel.Sheet = sheet
@@ -88,15 +87,15 @@ func Run() {
 		f := systemDiskexcel.OpenFile()
 		defer func() {
 			if err := f.Close(); err != nil {
-				log.Fatal("文件关闭失败", err)
+				logrus.Fatal("文件关闭失败", err)
 			}
 		}()
 
 		//获取表格所有的sheet
 		sheets := systemDiskexcel.ForGetSheet(f)
-		log.Println("获取有效的Sheet=", sheets)
+		logrus.Println("获取有效的Sheet=", sheets)
 		for _, sheet := range sheets {
-			log.Println("sheet=", sheet)
+			logrus.Println("sheet=", sheet)
 			LineInt := DetermineCase(SystemDiskFileName, sheet)
 			systemDiskexcel.CopyLine = LineInt
 			systemDiskexcel.Sheet = sheet
@@ -115,15 +114,15 @@ func Run() {
 		f := storageExcel.OpenFile()
 		defer func() {
 			if err := f.Close(); err != nil {
-				log.Fatal("文件关闭失败", err)
+				logrus.Fatal("文件关闭失败", err)
 			}
 		}()
 
 		//获取表格所有的sheet
 		sheets := storageExcel.ForGetSheet(f)
-		log.Println("获取有效的Sheet=", sheets)
+		logrus.Println("获取有效的Sheet=", sheets)
 		for _, sheet := range sheets {
-			log.Println("sheet=", sheet)
+			logrus.Println("sheet=", sheet)
 			LineInt := DetermineCase(storageFileName, sheet)
 			storageExcel.CopyLine = LineInt
 			storageExcel.Sheet = sheet
@@ -143,14 +142,14 @@ func Run() {
 		f := networkExcel.OpenFile()
 		defer func() {
 			if err := f.Close(); err != nil {
-				log.Fatal("文件关闭失败", err)
+				logrus.Fatal("文件关闭失败", err)
 			}
 		}()
 		//获取表格所有的sheet
 		sheets := networkExcel.ForGetSheet(f)
-		log.Println("获取有效的Sheet=", sheets)
+		logrus.Println("获取有效的Sheet=", sheets)
 		for _, sheet := range sheets {
-			log.Println("sheet=", sheet)
+			logrus.Println("sheet=", sheet)
 			LineInt := DetermineCase(NetworkFileName, sheet)
 			networkExcel.CopyLine = LineInt
 			networkExcel.Sheet = sheet
@@ -169,15 +168,15 @@ func Run() {
 		f := securityExcel.OpenFile()
 		defer func() {
 			if err := f.Close(); err != nil {
-				log.Fatal("文件关闭失败", err)
+				logrus.Fatal("文件关闭失败", err)
 			}
 		}()
 
 		//获取表格所有的sheet
 		sheets := securityExcel.ForGetSheet(f)
-		log.Println("获取有效的Sheet=", sheets)
+		logrus.Println("获取有效的Sheet=", sheets)
 		for _, sheet := range sheets {
-			log.Println("sheet=", sheet)
+			logrus.Println("sheet=", sheet)
 			LineInt := DetermineCase(SecurityFileName, sheet)
 			securityExcel.CopyLine = LineInt
 			securityExcel.Sheet = sheet
@@ -197,15 +196,15 @@ func Run() {
 		f := PaasExcel.OpenFile()
 		defer func() {
 			if err := f.Close(); err != nil {
-				log.Fatal("文件关闭失败", err)
+				logrus.Fatal("文件关闭失败", err)
 			}
 		}()
 
 		//获取表格所有的sheet
 		sheets := PaasExcel.ForGetSheet(f)
-		log.Println("获取有效的Sheet=", sheets)
+		logrus.Println("获取有效的Sheet=", sheets)
 		for _, sheet := range sheets {
-			log.Println("sheet=", sheet)
+			logrus.Println("sheet=", sheet)
 			LineInt := DetermineCase(PaasFileName, sheet)
 			PaasExcel.CopyLine = LineInt
 			PaasExcel.Sheet = sheet
@@ -228,5 +227,5 @@ func Run() {
 	SetCollStyle(countXlsx)
 
 	/*----------------------------------------------end---------------------------------------------------*/
-	log.Printf("已在项目目录下生成\"%v\"\n", countXlsx)
+	logrus.Printf("已在项目目录下生成\"%v\"\n", countXlsx)
 }

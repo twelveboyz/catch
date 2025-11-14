@@ -122,7 +122,7 @@ func publicationTime(content string) string {
 }
 
 func DeployImplementers(content string) string {
-	d := `公有云资源订购部署实\s+施\s*.*(\p{Han}{2,3}){1}`
+	d := `公有云资源订购部署实\s+施\s*.*?(\p{Han}{3}|\p{Han}{2})`
 	re := regexp.MustCompile(d)
 
 	strSub := re.FindStringSubmatch(content)

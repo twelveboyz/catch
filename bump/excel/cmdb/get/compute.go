@@ -2,7 +2,7 @@ package get
 
 import (
 	"Catch/bump/internal/mapping"
-	"log"
+	"github.com/sirupsen/logrus"
 	"strconv"
 )
 
@@ -26,10 +26,10 @@ type ComputeResource struct {
 	AvailabilityZone    string
 	SystemDiskSize      string
 	SystemDiskSpec      string
-	BillingMethod string
-	NIC1          Nic
-	NIC2          Nic
-	NIC3          Nic
+	BillingMethod       string
+	NIC1                Nic
+	NIC2                Nic
+	NIC3                Nic
 }
 
 type Nic struct {
@@ -49,7 +49,7 @@ type Nic struct {
 func (e *Excel) ParseComputeResourceToStruct() []ComputeResource {
 	rows, err := e.File.GetRows(e.Sheet)
 	if err != nil {
-		log.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
+		logrus.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
 	}
 
 	//行内容长度不统一，填充为一样的长度

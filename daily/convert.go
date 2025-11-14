@@ -2,7 +2,7 @@ package daily
 
 import (
 	"fmt"
-	"log"
+	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 )
@@ -54,7 +54,7 @@ func (e *Excel) ComPutDailyNewspaper(set Set) map[string]*AggregatedData {
 
 	// 打印测试信息
 	for k, v := range m {
-		log.Println("ComputeDaily=", k, v.TotalCounts, v.Comments)
+		logrus.Println("ComputeDaily=", k, v.TotalCounts, v.Comments)
 	}
 
 	return m
@@ -90,7 +90,7 @@ func (e *Excel) SystemDiskDailyNewspaper(set Set) map[string]*AggregatedData {
 			//统计系统盘容量
 			capaInt, err := strconv.Atoi(set.SystemDiskCapacity[i])
 			if err != nil {
-				log.Println("AtoI error:", err)
+				logrus.Warnln("AtoI error:", err)
 			}
 			m[systemDiskSpecification].CapacityCounts += capaInt
 		}
@@ -106,7 +106,7 @@ func (e *Excel) SystemDiskDailyNewspaper(set Set) map[string]*AggregatedData {
 
 	// 打印测试信息
 	for k, v := range m {
-		log.Println("SystemDiskDaily=", k, v.TotalCounts, v.CapacityCounts)
+		logrus.Println("SystemDiskDaily=", k, v.TotalCounts, v.CapacityCounts)
 	}
 
 	return m
@@ -142,14 +142,14 @@ func (e *Excel) StorageDailyNewspaper(set Set) map[string]*AggregatedData {
 		if strings.Contains(subcategory, "对象存储") {
 			capaInt, err := strconv.Atoi(set.Capacity[i])
 			if err != nil {
-				log.Println("DailyNewspaper函数Atoi转换失败:", err)
+				logrus.Warnln("DailyNewspaper函数Atoi转换失败:", err)
 			}
 			m[subcategory].CapacityCounts = capaInt
 
 		} else {
 			capaInt, err := strconv.Atoi(set.Capacity[i])
 			if err != nil {
-				log.Println("DailyNewspaper函数Atoi转换失败:", err)
+				logrus.Warnln("DailyNewspaper函数Atoi转换失败:", err)
 			}
 			m[subcategory].CapacityCounts += capaInt
 		}
@@ -177,7 +177,7 @@ func (e *Excel) StorageDailyNewspaper(set Set) map[string]*AggregatedData {
 
 	// 打印测试信息
 	for k, v := range m {
-		log.Println("StorageDaily=", k, v.TotalCounts, v.CapacityCounts)
+		logrus.Println("StorageDaily=", k, v.TotalCounts, v.CapacityCounts)
 	}
 
 	return m
@@ -212,7 +212,7 @@ func (e *Excel) NetworkDailyNewspaper(set Set) map[string]*AggregatedData {
 
 	// 打印测试信息
 	for k, v := range m {
-		log.Println("NetworkDaily=", k, v.TotalCounts)
+		logrus.Println("NetworkDaily=", k, v.TotalCounts)
 	}
 	return m
 }
@@ -239,7 +239,7 @@ func (e *Excel) SecurityDailyNewspaper(set Set) map[string]*AggregatedData {
 		// 更新子类别的总计数
 		number, err := strconv.Atoi(set.Number[i])
 		if err != nil {
-			log.Println("AtoI error:", err)
+			logrus.Println("AtoI error:", err)
 		}
 		m[subcategory].TotalCounts += number
 
@@ -250,7 +250,7 @@ func (e *Excel) SecurityDailyNewspaper(set Set) map[string]*AggregatedData {
 
 	// 打印测试信息
 	for k, v := range m {
-		log.Println("SecurityDaily=", k, v.TotalCounts)
+		logrus.Println("SecurityDaily=", k, v.TotalCounts)
 	}
 	return m
 }
@@ -284,7 +284,7 @@ func (e *Excel) PAASDailyNewspaper(set Set) map[string]*AggregatedData {
 
 	// 打印测试信息
 	for k, v := range m {
-		log.Println("PAASDaily=", k, v.TotalCounts)
+		logrus.Println("PAASDaily=", k, v.TotalCounts)
 	}
 
 	return m

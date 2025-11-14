@@ -20,7 +20,7 @@ func ExecuteGetSTPInfo(uuids []string, pools []string) []SharedTrafficPackage {
 	var InfoSet []SharedTrafficPackage
 	for _, p := range pools {
 		Body := utils.Get(Url, HeadersFun(p))
-		//log.Println(Body)
+		//logrus.Println(Body)
 
 		is := ResourceMatchByUUID(Body, uuids)
 

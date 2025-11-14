@@ -3,8 +3,9 @@ package internal
 import (
 	"bufio"
 	"fmt"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/sys/windows"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -14,12 +15,17 @@ import (
 
 // CMDBFilterFileName
 // 根据传入两个key来匹配定位文件名称
-func CMDBFilterFileName(root string, key1 string, key2 string) string {
+func CMDBFilterFileName(root string, DirKey string, FileKey []string) string {
+	logrus.Println("------ start CMDB ------")
+
 	var files []string
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		files = append(files, path)
+		if !info.IsDir() {
+			files = append(files, path)
+		}
 		return nil
 	})
+
 	if err != nil {
 		panic(err)
 	}
@@ -27,19 +33,26 @@ func CMDBFilterFileName(root string, key1 string, key2 string) string {
 	for _, file := range files {
 		var fileBool bool
 		//获取文件相对的路径
-		reFile := RegexFunc("CMDB录入表.*", file)
+		reFile := RegexFunc(`资源录入表.*`, file)
 
-		if key2 == "PAAS" {
-			upperFile := strings.ToUpper(reFile)
-			//判断条件如果key1 key2匹配上则返回改文件绝对路径
-			fileBool = strings.Contains(reFile, key1) && strings.Contains(upperFile, key2) && !strings.Contains(reFile, "~$")
+		if reFile == "" {
+			continue
 		} else {
-			fileBool = strings.Contains(reFile, key1) && strings.Contains(reFile, key2) && !strings.Contains(reFile, "~$")
+			//fmt.Println("reFile:", reFile)
+		}
+
+		//循环Key只要匹配中一个则认为符合条件
+		for _, key := range FileKey {
+			//fmt.Println(reFile, "key:", key, strings.Contains(reFile, DirKey), strings.Contains(reFile, key), !strings.Contains(reFile, "~$"))
+			if strings.Contains(reFile, DirKey) && strings.Contains(reFile, key) && !strings.Contains(reFile, "~$") {
+				fileBool = true
+				break
+			}
 		}
 
 		if fileBool {
-			log.Println("正则抓取的相对路径是：", reFile)
-			log.Println("最终捕抓文件名称路径是：", file)
+			logrus.Println("正则抓取的相对路径是：", reFile)
+			logrus.Println("最终捕抓文件名称路径是：", file)
 			return file
 		}
 	}
@@ -70,42 +83,7 @@ func ConfigFilterFileName(root string, key1 string, key2 string) string {
 			fileBool = strings.Contains(reFile, key1) && strings.Contains(reFile, key2) && !strings.Contains(reFile, "~$")
 		}
 		if fileBool {
-			log.Println("自动捕抓文件名称是：", file)
-			return file
-		}
-	}
-	return ""
-}
-
-// DailyFilterFileName
-// 根据传入两个key来匹配定位文件名称
-func DailyFilterFileName(root string, key1 string, key2 string) string {
-
-	var files []string
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		files = append(files, path)
-		return nil
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	for _, file := range files {
-		var fileBool bool
-		//获取文件相对的路径
-		reFile := RegexFunc("资源订购配置.*", file)
-
-		if key2 == "PAAS" {
-			upperFile := strings.ToUpper(reFile)
-			//判断条件如果key1 key2匹配上则返回改文件绝对路径
-			fileBool = strings.Contains(reFile, key1) && strings.Contains(upperFile, key2) && !strings.Contains(reFile, "~$")
-		} else {
-			fileBool = strings.Contains(reFile, key1) && strings.Contains(reFile, key2) && !strings.Contains(reFile, "~$")
-		}
-
-		if fileBool {
-			log.Println("正则抓取的相对路径是：", reFile)
-			log.Println("最终捕抓文件名称路径是：", file)
+			logrus.Println("自动捕抓文件名称是：", file)
 			return file
 		}
 	}
@@ -117,9 +95,14 @@ func RegexFunc(regex string, Str string) string {
 	if err != nil {
 		fmt.Println("regexp.compile失败", err)
 	}
-	cat := r.FindString(Str)
+	cat := r.FindStringSubmatch(Str)
 
-	return cat
+	if len(cat) == 0 {
+		return ""
+	} else {
+		return cat[0]
+	}
+
 }
 
 func InputRoot() string {
@@ -128,7 +111,7 @@ func InputRoot() string {
 		fmt.Print("目录路径：")
 		input, err := inputReader.ReadString('\n')
 		if err != nil {
-			log.Println("获取输入内容失败：", err)
+			logrus.Println("获取输入内容失败：", err)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -136,7 +119,7 @@ func InputRoot() string {
 
 		fInfo, err := os.Stat(input)
 		if err != nil {
-			log.Println("输入的目录路径有误:", err)
+			logrus.Println("输入的目录路径有误:", err)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -144,7 +127,7 @@ func InputRoot() string {
 		//需要判断是否是目录
 		dirBool := fInfo.IsDir()
 		if !dirBool {
-			log.Println("请选择项目根目录!")
+			logrus.Println("请选择项目根目录!")
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -167,14 +150,14 @@ func UserInputRoot() (string, string) {
 func InputChoose() string {
 	for {
 		inputReader := bufio.NewReader(os.Stdin)
-		fmt.Print("1.统计本批次交维信息 2.汇总本次建设摘要 3.汇总本次建设信息 4.资源字段检查 5.查询云主机字段，请输入(1 / 2 / 3 / 4 / 5): ")
+		fmt.Print("1.统计本批次交维信息 2.汇总本次建设摘要 3.汇总本次建设信息，请输入(1 / 2 / 3): ")
 		input, err := inputReader.ReadString('\n')
 		if err != nil {
-			log.Println("获取输入内容失败：", err)
+			logrus.Println("获取输入内容失败：", err)
 		}
 		input = strings.TrimSpace(input)
 
-		if input == "1" || input == "2" || input == "3" || input == "4" || input == "5" {
+		if input == "1" || input == "2" || input == "3" {
 			return input
 		} else if input == "q" {
 			os.Exit(0)
@@ -194,7 +177,7 @@ func InputMessages() map[string]string {
 			input, err := inputReader.ReadString('\n')
 			input = strings.TrimSpace(input)
 			if err != nil {
-				log.Println("获取输入内容失败：", err)
+				logrus.Println("获取输入内容失败：", err)
 			}
 			if input == "" {
 				InputMap["InBatches"] = "不分批"
@@ -206,7 +189,7 @@ func InputMessages() map[string]string {
 			input, err := inputReader.ReadString('\n')
 			input = strings.TrimSpace(input)
 			if err != nil {
-				log.Println("获取输入内容失败：", err)
+				logrus.Println("获取输入内容失败：", err)
 			}
 			InputMap["DemandPerson"] = input
 
@@ -215,7 +198,7 @@ func InputMessages() map[string]string {
 			input, err := inputReader.ReadString('\n')
 			input = strings.TrimSpace(input)
 			if err != nil {
-				log.Println("获取输入内容失败：", err)
+				logrus.Println("获取输入内容失败：", err)
 			}
 			InputMap["Demander"] = input
 
@@ -224,7 +207,7 @@ func InputMessages() map[string]string {
 			input, err := inputReader.ReadString('\n')
 			input = strings.TrimSpace(input)
 			if err != nil {
-				log.Println("获取输入内容失败：", err)
+				logrus.Println("获取输入内容失败：", err)
 			}
 			InputMap["OATime"] = input
 
@@ -233,7 +216,7 @@ func InputMessages() map[string]string {
 			input, err := inputReader.ReadString('\n')
 			input = strings.TrimSpace(input)
 			if err != nil {
-				log.Println("获取输入内容失败：", err)
+				logrus.Println("获取输入内容失败：", err)
 			}
 			InputMap["PrimaryAccount"] = input
 		case 6:
@@ -241,7 +224,7 @@ func InputMessages() map[string]string {
 			input, err := inputReader.ReadString('\n')
 			input = strings.TrimSpace(input)
 			if err != nil {
-				log.Println("获取输入内容失败：", err)
+				logrus.Println("获取输入内容失败：", err)
 			}
 			InputMap["SubnetInfo"] = input
 		}
@@ -250,26 +233,24 @@ func InputMessages() map[string]string {
 }
 
 func Prompt(p string) {
-	log.Printf("\n-----------------------------------------\n未匹配到%v的Excel表格,已跳过···\n-----------------------------------------\n", p)
+	logrus.Printf("\n-----------------------------------------\n未匹配到%v的Excel表格,已跳过···\n-----------------------------------------\n", p)
 }
 
 func Tip() {
 	fmt.Println(`
 |------------------------------------------------------------------------------------------------------------------|
-|version: 1.6.1
+|version: 1.6.2
 |注意事项：                                                                                 
 |一、目录名称命名需要按照"项目ID_项目名称"，命名例子:                                               
 |    - C284_短信平台黑名单模块资源扩容需                                                        
 |    - 移动云-C284_短信平台黑名单模块资源扩容需求-交维材料                                         
 |二、自动抓取Excel表格内容是根据文件夹和文件名称抓取
 |    1.统计本批次交维信息
-|    - 目录名称要包含: "CMDB录入表" , 文件名称要包含: "资源录入"         
+|    - 目录名称要包含: "资源录入表" , 文件名称要包含: "资源录入"         
 |    2.汇总本次建设摘要
 |    - 文件名称要包含: "计算资源"、"存储资源"、"网络"、"安全"、"PAAS"
 |    3.汇总本次建设信息
 |    - 文件名称要包含: "计算资源"、"存储资源"、"网络"、"安全"、"PAAS"
-|三、移动云产品资源字段检查
-|    已支持产品：云主机、裸金属、云硬盘、文件存储、并行文件存储、公网IP、ipv6、Nat网关、负载均衡、云端口(需主账号权限)、云专线
 |                                                                                               deployer: Linzheng
 |------------------------------------------------------------------------------------------------------------------|`,
 	)
@@ -281,9 +262,10 @@ func LogFunc(project string) *os.File {
 	var fileName string
 	err := os.Mkdir("log", os.ModePerm)
 	if err != nil && !os.IsExist(err) {
-		log.Fatal("创建目录失败", err)
+		logrus.Fatal("创建目录失败", err)
 	}
-	fileName = fmt.Sprintf("log/%v-%v-Catch日志.txt", time.Now().Format(fileTimeFormat), filepath.Base(project))
+
+	fileName = fmt.Sprintf("log/%v-%v-日志.txt", time.Now().Format(fileTimeFormat), filepath.Base(project))
 
 	logFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
 	if err != nil {
@@ -291,7 +273,7 @@ func LogFunc(project string) *os.File {
 	}
 
 	multiWriter := io.MultiWriter(os.Stdout, logFile)
-	log.SetOutput(multiWriter)
+	logrus.SetOutput(multiWriter)
 	return logFile
 }
 
@@ -305,6 +287,20 @@ func CreateTempDirAndCopy(projectPath, tempDir string) error {
 		}
 		return fmt.Errorf("copy failed: %v", err)
 	}
+	return nil
+}
+
+func MoveAndClearFile(source, destination, clearTempDir string) error {
+	err := MoveFile(source, destination)
+	if err != nil {
+		return fmt.Errorf("move err:%s", err)
+	}
+
+	err = CleanTempDir(clearTempDir)
+	if err != nil {
+		return fmt.Errorf("remove err:%s", err)
+	}
+
 	return nil
 }
 
@@ -359,4 +355,22 @@ func AllSame[T comparable](slice []T) bool {
 		}
 	}
 	return true
+}
+
+func init() {
+	// 启用 Windows 控制台虚拟终端（VT）处理
+	stdout := windows.Handle(os.Stdout.Fd())
+	var originalMode uint32
+
+	windows.GetConsoleMode(stdout, &originalMode)
+	windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+
+	logrus.SetLevel(logrus.DebugLevel)
+
+	logrus.SetFormatter(&logrus.TextFormatter{
+		ForceColors:      true,
+		FullTimestamp:    true,
+		DisableTimestamp: false,
+		TimestampFormat:  "2006-01-02 15:04:05",
+	})
 }

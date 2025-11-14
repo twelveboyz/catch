@@ -3,7 +3,7 @@ package config
 import (
 	"Catch/internal"
 	"fmt"
-	"log"
+	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 )
@@ -140,7 +140,7 @@ func ComPutTotalResource(set Set) [][]string {
 
 	// 打印结果以验证
 	for _, slice := range countSlice {
-		log.Println("ComPutTotalResource函数打印结果：", slice)
+		logrus.Println("ComPutTotalResource函数打印结果：", slice)
 	}
 	return countSlice
 }
@@ -170,7 +170,7 @@ func SystemDiskTotalResource(set Set) [][]string {
 		cpaStr := strings.ReplaceAll(set.SystemDiskCapacity[i], "G", "")
 		capInt, err := strconv.Atoi(cpaStr)
 		if err != nil {
-			log.Println("CapInt获取Atoi转换失败", err)
+			logrus.Warnln("CapInt获取Atoi转换失败", err)
 		}
 		aggregatedResources[key].capacityCounts = aggregatedResources[key].capacityCounts + capInt
 
@@ -197,7 +197,7 @@ func SystemDiskTotalResource(set Set) [][]string {
 
 	// 打印结果以验证
 	for _, slice := range countSlice {
-		log.Println("SystemDiskTotalResource函数打印结果：", slice)
+		logrus.Println("SystemDiskTotalResource函数打印结果：", slice)
 	}
 	return countSlice
 }
@@ -234,7 +234,7 @@ func StorageTotalResource(set Set) [][]string {
 		//统计存储相同类型的总量
 		capInt, err := strconv.Atoi(set.Capacity[i])
 		if err != nil {
-			log.Println("CapInt获取Atoi转换失败", err)
+			logrus.Warnln("CapInt获取Atoi转换失败", err)
 		}
 		//统计相同小类的总容量
 		aggregatedResources[key].capacityCounts = aggregatedResources[key].capacityCounts + capInt
@@ -268,7 +268,7 @@ func StorageTotalResource(set Set) [][]string {
 
 	// 打印结果以验证
 	for _, slice := range countSlice {
-		log.Println("存储资源SecurityTotalResource函数打印结果：", slice)
+		logrus.Println("存储资源SecurityTotalResource函数打印结果：", slice)
 	}
 	return countSlice
 }
@@ -332,7 +332,7 @@ func NetworkTotalResource(set Set) [][]string {
 
 	// 打印结果以验证
 	for _, slice := range countSlice {
-		log.Println("NetworkTotalResource函数打印结果：", slice)
+		logrus.Println("NetworkTotalResource函数打印结果：", slice)
 	}
 	return countSlice
 }
@@ -382,7 +382,7 @@ func SecurityTotalResource(set Set) [][]string {
 
 	// 打印结果以验证
 	for _, slice := range countSlice {
-		log.Println("安全资源SecurityTotalResource函数打印结果：", slice)
+		logrus.Println("安全资源SecurityTotalResource函数打印结果：", slice)
 	}
 	return countSlice
 }
@@ -430,7 +430,7 @@ func PAASTotalResource(set Set) [][]string {
 
 	// 打印结果以验证
 	for _, slice := range countSlice {
-		log.Println("PAASTotalResource函数打印结果：", slice)
+		logrus.Println("PAASTotalResource函数打印结果：", slice)
 	}
 	return countSlice
 }

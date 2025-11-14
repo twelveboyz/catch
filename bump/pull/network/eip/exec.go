@@ -21,7 +21,7 @@ func ExecuteGetEIPInfo(uuids []string, pools []string) []*ElasticIP {
 	var InfoSet []*ElasticIP
 	for _, pool := range pools {
 		Body := utils.Get(Url, HeadersFun(pool))
-		//log.Println(Body)
+		//logrus.Println(Body)
 
 		is := ResourceMatchByUUID(Body, uuids)
 		JoinPoolInfo(is, pool)

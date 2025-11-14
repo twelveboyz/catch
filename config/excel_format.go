@@ -2,8 +2,8 @@ package config
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"github.com/xuri/excelize/v2"
-	"log"
 	"strings"
 )
 
@@ -13,11 +13,11 @@ func (e *Excel) AutoXlsx(xlsxFileName string, n int, sliceMap []map[string]strin
 	// 创建一个新的工作簿。
 	f, err := excelize.OpenFile(xlsxFileName)
 	if err != nil {
-		log.Println("打开文件失败", err)
+		logrus.Errorln("打开文件失败", err)
 	}
 	defer func() {
 		if err = f.Close(); err != nil {
-			log.Println("关闭xlsx文件失败", err)
+			logrus.Errorln("关闭xlsx文件失败", err)
 		}
 	}()
 
@@ -67,16 +67,16 @@ func (e *Excel) AutoXlsx(xlsxFileName string, n int, sliceMap []map[string]strin
 		case "PAAS资源":
 			err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], sliceMap[i]["AvailabilityZone"], "PAAS", sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "个", sliceMap[i]["Counts"]})
 		default:
-			log.Println("写入数据时没找到对应资源")
+			logrus.Println("写入数据时没找到对应资源")
 		}
 
 		if err != nil {
-			log.Println("填写失败", err)
+			logrus.Println("填写失败", err)
 		}
 
 		err = f.SaveAs(xlsxFileName)
 		if err != nil {
-			log.Println(err)
+			logrus.Println(err)
 		}
 	}
 }
@@ -97,12 +97,12 @@ func AutoWidth(FileName string, colStr string, colInt int) {
 	//设置列宽，sheet , colStr =A列到A列， widthFloat = 宽度
 	err := f.SetColWidth(sheetName, colStr, colStr, widthFloat)
 	if err != nil {
-		log.Println("设置宽度失败", err)
+		logrus.Println("设置宽度失败", err)
 	}
 
 	err = f.Save()
 	if err != nil {
-		log.Println("保存失败", err)
+		logrus.Println("保存失败", err)
 	}
 }
 
@@ -152,11 +152,11 @@ func SetCollStyle(FileName string) {
 	sheetName := "Sheet1"
 	rows, err := f.GetRows(sheetName)
 	if err != nil {
-		log.Println("获取xlsx表格数据失败：", err)
+		logrus.Println("获取xlsx表格数据失败：", err)
 	}
 	styleId, err := f.NewStyle(&borderStyle)
 	if err != nil {
-		log.Println("创建边宽风格失败：", err)
+		logrus.Println("创建边宽风格失败：", err)
 	}
 
 	//自动获取
@@ -175,11 +175,11 @@ func SetCollStyle(FileName string) {
 	//设置单元格边框范围 例如 [A7 ~ J30]
 	err = f.SetCellStyle("Sheet1", ACell, JCell, styleId)
 	if err != nil {
-		log.Println("设置边框失败", err)
+		logrus.Println("设置边框失败", err)
 	}
 
 	err = f.Save()
 	if err != nil {
-		log.Println("保存失败", err)
+		logrus.Println("保存失败", err)
 	}
 }

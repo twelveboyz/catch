@@ -18,3 +18,7 @@ const (
 	NodeName                   = "节点名称"
 	AvailabilityZone           = "可用区"
 )
+
+const (
+	SheetResourceEntry = "资源录入"
+)

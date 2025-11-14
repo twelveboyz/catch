@@ -1,7 +1,6 @@
 package main
 
 import (
-	bump "Catch/bump/run"
 	"Catch/cmdb"
 	"Catch/config"
 	"Catch/daily"
@@ -21,10 +20,6 @@ func main() {
 			daily.Run()
 		case "3":
 			config.Run()
-		case "4":
-			bump.Run()
-		case "5":
-			bump.RunFind()
 		}
 	}
 }

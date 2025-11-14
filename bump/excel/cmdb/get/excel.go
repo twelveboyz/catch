@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/xuri/excelize/v2"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -63,9 +62,9 @@ func (e *Excel) ForGetSheet() []string {
 
 		//过滤掉隐藏的sheet
 		visibleBool, _ := e.File.GetSheetVisible(v)
-		//log.Println("可见性 sheet=", v, "bool=", visibleBool) //排错使用，打印sheet可见性，如果隐藏则过滤
+		//logrus.Println("可见性 sheet=", v, "bool=", visibleBool) //排错使用，打印sheet可见性，如果隐藏则过滤
 		if b && visibleBool {
-			//log.Printf("sheet=%v，key: %v value: %v", xlsx.ResourceType, k, v) //排错使用 查看获取到的每一个sheet名称
+			//logrus.Printf("sheet=%v，key: %v value: %v", xlsx.ResourceType, k, v) //排错使用 查看获取到的每一个sheet名称
 			//xlsx.Sheet = fMap[i]
 			slice = append(slice, fMap[k])
 		}
@@ -80,7 +79,7 @@ func (e *Excel) CaptureColNumber(titleName string, contains string) int {
 	//获取xlsx表格中所有内容
 	rows, err := e.File.GetRows(e.Sheet)
 	if err != nil {
-		log.Fatal("获取行内容失败：", err)
+		logrus.Fatal("获取行内容失败：", err)
 	}
 
 	//rows是保存每一行数据的全部内容 1xxxx 2xxxx 3xxxxx

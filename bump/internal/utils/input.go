@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -16,7 +15,7 @@ func InputRoot() string {
 		fmt.Print("目录路径：")
 		input, err := inputReader.ReadString('\n')
 		if err != nil {
-			log.Println("获取输入内容失败：", err)
+			logrus.Println("获取输入内容失败：", err)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -24,7 +23,7 @@ func InputRoot() string {
 
 		fInfo, err := os.Stat(input)
 		if err != nil {
-			log.Println("输入的目录路径有误:", err)
+			logrus.Println("输入的目录路径有误:", err)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -32,7 +31,7 @@ func InputRoot() string {
 		//需要判断是否是目录
 		dirBool := fInfo.IsDir()
 		if !dirBool {
-			log.Println("请选择项目根目录!")
+			logrus.Println("请选择项目根目录!")
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -136,7 +135,7 @@ func InputChoose() string {
 		fmt.Print("1.根据云主机工程编号查询资源（d157_） 2.根据UUID查询资源（使用英文句号分割） [1 / 2]:")
 		input, err := inputReader.ReadString('\n')
 		if err != nil {
-			log.Println("获取输入内容失败：", err)
+			logrus.Println("获取输入内容失败：", err)
 		}
 		input = strings.TrimSpace(input)
 

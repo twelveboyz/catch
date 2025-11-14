@@ -6,7 +6,6 @@ import (
 	"Catch/bump/internal/utils"
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"log"
 	"strings"
 )
 
@@ -15,7 +14,7 @@ func ExecuteGetIronicInfo(uuids []string, pools []string) []*Ironic {
 	var InfoSet []*Ironic
 	for _, pool := range pools {
 		Body := utils.Get(Url, HeadersFun(pool))
-		//log.Println(Body)
+		//logrus.Println(Body)
 
 		//InfoSet := JsonParseResourceInfoALL(Body)
 		is := JsonParseResourceByUUIDs(Body, uuids)
@@ -62,7 +61,7 @@ func ExecuteALL() []*Ironic {
 		fmt.Println()
 	}
 
-	log.Println("裸金属共发起请求：", len(InfoSet))
+	logrus.Println("裸金属共发起请求：", len(InfoSet))
 
 	return InfoSet
 }
@@ -120,7 +119,7 @@ func ExecuteMatchByName() {
 	for _, pool := range bootstrap.PoolIDs {
 		Body := utils.Get(Url, HeadersFun(pool))
 		//fmt.Println(HeadersFun(pool))
-		//log.Println(Body)
+		//logrus.Println(Body)
 
 		infoSet := JsonParseResourceInfoALL(Body)
 

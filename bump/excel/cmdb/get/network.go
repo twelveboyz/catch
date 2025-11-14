@@ -3,7 +3,7 @@ package get
 import (
 	"Catch/bump/internal/mapping"
 	"errors"
-	"log"
+	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 )
@@ -229,7 +229,7 @@ func (e *Excel) ParseNetworkResourceToStruct() (NetworkResource, error) {
 func (e *Excel) ParseLBToStruct() []LoadBalanceResource {
 	rows, err := e.File.GetRows(e.Sheet)
 	if err != nil {
-		log.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
+		logrus.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
 		return nil
 	}
 
@@ -291,7 +291,7 @@ func (e *Excel) ParseLBToStruct() []LoadBalanceResource {
 func (e *Excel) ParseEipToStruct() []EipResource {
 	rows, err := e.File.GetRows(e.Sheet)
 	if err != nil {
-		log.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
+		logrus.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
 		return nil
 	}
 
@@ -355,7 +355,7 @@ func (e *Excel) ParseEipToStruct() []EipResource {
 func (e *Excel) ParseSharedTrafficPackageToStruct() []SharedTrafficPackageResource {
 	rows, err := e.File.GetRows(e.Sheet)
 	if err != nil {
-		log.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
+		logrus.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
 		return nil
 	}
 
@@ -411,7 +411,7 @@ func (e *Excel) ParseSharedTrafficPackageToStruct() []SharedTrafficPackageResour
 func (e *Excel) ParseIPv6ToStruct() []IPv6Resource {
 	rows, err := e.File.GetRows(e.Sheet)
 	if err != nil {
-		log.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
+		logrus.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
 		return nil
 	}
 
@@ -467,7 +467,7 @@ func (e *Excel) ParseIPv6ToStruct() []IPv6Resource {
 func (e *Excel) ParseDirectConnectToStruct() []DirectConnectResource {
 	rows, err := e.File.GetRows(e.Sheet)
 	if err != nil {
-		log.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
+		logrus.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
 		return nil
 	}
 	// 行内容长度不统一，填充为一样的长度
@@ -527,7 +527,7 @@ func (e *Excel) ParseDirectConnectToStruct() []DirectConnectResource {
 func (e *Excel) ParseNATGatewayToStruct() []NATGatewayResource {
 	rows, err := e.File.GetRows(e.Sheet)
 	if err != nil {
-		log.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
+		logrus.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
 		return nil
 	}
 
@@ -583,7 +583,7 @@ func (e *Excel) ParseNATGatewayToStruct() []NATGatewayResource {
 func (e *Excel) ParseCloudPortToStruct() []CloudPortResource {
 	rows, err := e.File.GetRows(e.Sheet)
 	if err != nil {
-		log.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
+		logrus.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
 		return nil
 	}
 
@@ -671,7 +671,7 @@ func (e *Excel) ParseCloudPortToStruct() []CloudPortResource {
 func (e *Excel) ParseOtherResourceToStruct() []OtherResource {
 	rows, err := e.File.GetRows(e.Sheet)
 	if err != nil {
-		log.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
+		logrus.Printf("filename=%s sheet=%s get rows error:%s", e.FileName, e.Sheet, err.Error())
 		return nil
 	}
 

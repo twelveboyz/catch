@@ -21,7 +21,7 @@ func ExecuteGetIPv6Info(pools []string) []*IPv6 {
 	var InfoSet []*IPv6
 	for _, pool := range pools {
 		Body := utils.Get(Url, HeadersFun(pool))
-		//log.Println(Body)
+		//logrus.Println(Body)
 
 		is := ResourceInfoALL(Body)
 		JoinPoolInfo(is, pool)

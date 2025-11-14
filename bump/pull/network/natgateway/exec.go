@@ -21,7 +21,7 @@ func ExecuteGetNatInfo(uuids []string, pools []string) []*NATGateway {
 	var InfoSet []*NATGateway
 	for _, pool := range pools {
 		Body := utils.Get(Url, HeadersFun(pool))
-		//log.Println(Body)
+		//logrus.Println(Body)
 
 		is := ResourceMatchByUUID(Body, uuids)
 		JoinPoolInfo(is, pool)
