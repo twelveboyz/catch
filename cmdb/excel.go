@@ -19,28 +19,19 @@ type Excel struct {
 	TitleLine int
 }
 
-func NewExcel(fileName, sheet string) *Excel {
+func NewExcel(fileName, sheet string, titleLine int) *Excel {
 	//打开一个excel文件
 	return &Excel{
 		Filename:  fileName,
 		Sheet:     sheet,
-		CopyLine:  2,
-		TitleLine: 1,
+		CopyLine:  titleLine + 1,
+		TitleLine: titleLine,
 		File:      OpenFile(fileName),
 	}
 }
 
 func OpenFile(fileName string) *excelize.File {
 	f, err := excelize.OpenFile(fileName)
-	if err != nil {
-		logrus.Fatal("打开文件失败:", err)
-	}
-
-	return f
-}
-
-func (e *Excel) OpenFile() *excelize.File {
-	f, err := excelize.OpenFile(e.Filename)
 	if err != nil {
 		logrus.Fatal("打开文件失败:", err)
 	}
@@ -89,9 +80,44 @@ func (e *Excel) ResourceStatistics() []ResourceCountInfo {
 	}
 
 	//合并统计两列数据共出现的次数，并且返回一个[][]string类型的统计数据
-	countsSlice := TotalResource(set)
 
-	return slicesToStruct(countsSlice)
+	return slicesToStruct(TotalResource(set))
+}
+
+func (e *Excel) SecurityResourceStatistics() []ResourceCountInfo {
+	//根据第一行标题匹配string，匹配成功后返回标题所在的列对于的切片下标，使用这个下标来获取该标题一列的数据
+	resourceSubcategoryInt := e.CaptureColNumber(ResourceType, e.TitleLine, "y")
+	specificationInt := e.CaptureColNumber(Specification, e.TitleLine, "y")
+	nodeNameInt := e.CaptureColNumber(Node, e.TitleLine, "y")
+	number := e.CaptureColNumber(Number, e.TitleLine, "y")
+
+	//根据下标抓取一列的数据，例如: 下标=0就是A列、下标=18，则是对于Xlsx表中“S”列的数据
+	resourceSubcategoryData := e.GetColCall(resourceSubcategoryInt)
+	resourceCategoryData := e.fillInColumn(len(resourceSubcategoryData), "云安全")
+	specificationData := e.GetColCall(specificationInt)
+	nodeData := e.GetColCall(nodeNameInt)
+	numberData := e.GetColCall(number)
+
+	set := Set{
+		ResourceCategory:    resourceCategoryData,
+		ResourceSubcategory: resourceSubcategoryData,
+		Specification:       specificationData,
+		Node:                nodeData,
+		Comments:            numberData,
+	}
+
+	//合并统计两列数据共出现的次数，并且返回一个[][]string类型的统计数据
+	return slicesToStruct(TotalResource(set))
+}
+
+// fillInColumn 填充列数据
+func (e *Excel) fillInColumn(columnNumber int, data string) []string {
+	var dataSlice = make([]string, 0, columnNumber)
+	for i := 0; i < columnNumber; i++ {
+		dataSlice = append(dataSlice, data)
+	}
+
+	return dataSlice
 }
 
 func systemDiskRegexp(content string) string {
@@ -125,6 +151,8 @@ func (e *Excel) writeToResultExcel(n int, resourceCountInfos []ResourceCountInfo
 		e.writeCloudStorage(num, rci)
 		e.writeCloudNetwork(num, rci)
 		e.writeCloudPaaS(num, rci)
+		e.writeOther(num, rci)
+		e.writeSecurity(num, rci)
 
 	}
 
@@ -137,18 +165,19 @@ func (e *Excel) writeToResultExcel(n int, resourceCountInfos []ResourceCountInfo
 func (e *Excel) writeCompute(num *int, rci ResourceCountInfo) {
 	resourceCategory := rci.resourceCategory
 	_ = rci.resourceSubcategory
+	nodeName := strings.ReplaceAll(rci.NodeName, "_", "-")
 
 	if resourceCategory == "弹性计算" || resourceCategory == "KCS" {
 		*num++
 		cell := fmt.Sprintf("A%d", *num)
 
-		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts})
+		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, nodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts})
 		if err != nil {
 			logrus.Errorf("WriteCompute %s写入数据失败：%v", cell, err)
 			return
 		}
 
-		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts)
+		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, nodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts)
 	}
 
 }
@@ -156,27 +185,28 @@ func (e *Excel) writeCompute(num *int, rci ResourceCountInfo) {
 func (e *Excel) writeSystemDisk(num *int, rci ResourceCountInfo) {
 	resourceCategory := rci.resourceCategory
 	_ = rci.resourceSubcategory
+	nodeName := strings.ReplaceAll(rci.NodeName, "_", "-")
 
 	if resourceCategory == "云存储-系统盘" {
 		*num++
 		cell := fmt.Sprintf("A%d", *num)
 
-		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, rci.NodeName, "", "云存储", "云硬盘", rci.Specification, "GB", rci.Capacity, rci.Counts, "系统盘"})
+		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, nodeName, "", "云存储", "云硬盘", rci.Specification, "GB", rci.Capacity, rci.Counts, "系统盘"})
 		if err != nil {
 			logrus.Errorf("WriteSystemDisk %s写入数据失败：%v", cell, err)
 			return
 		}
 
-		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, rci.NodeName, "", "云存储", "云硬盘", rci.Specification, "GB", rci.Capacity, rci.Counts, "系统盘")
+		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, nodeName, "", "云存储", "云硬盘", rci.Specification, "GB", rci.Capacity, rci.Counts, "系统盘")
 
 	}
 
 }
 
 func (e *Excel) writeCloudStorage(num *int, rci ResourceCountInfo) {
-
 	resourceCategory := rci.resourceCategory
 	resourceSubcategory := rci.resourceSubcategory
+	nodeName := strings.ReplaceAll(rci.NodeName, "_", "-")
 
 	if resourceCategory == "云存储" {
 		*num++
@@ -184,10 +214,10 @@ func (e *Excel) writeCloudStorage(num *int, rci ResourceCountInfo) {
 
 		var err error
 		if strings.Contains(resourceSubcategory, "对象存储") {
-			err = e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "GB", rci.SingleCapacity, rci.Counts, rci.comment})
+			err = e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, nodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "GB", rci.SingleCapacity, rci.Counts, rci.comment})
 
 		} else {
-			err = e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "GB", rci.Capacity, rci.Counts})
+			err = e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, nodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "GB", rci.Capacity, rci.Counts})
 
 		}
 
@@ -196,7 +226,7 @@ func (e *Excel) writeCloudStorage(num *int, rci ResourceCountInfo) {
 			return
 		}
 
-		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "GB", rci.Capacity, rci.Counts)
+		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, nodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "GB", rci.Capacity, rci.Counts)
 	}
 
 }
@@ -204,6 +234,7 @@ func (e *Excel) writeCloudStorage(num *int, rci ResourceCountInfo) {
 func (e *Excel) writeCloudNetwork(num *int, rci ResourceCountInfo) {
 	resourceCategory := rci.resourceCategory
 	_ = rci.resourceSubcategory
+	nodeName := strings.ReplaceAll(rci.NodeName, "_", "-")
 
 	if resourceCategory == "云网络" {
 		*num++
@@ -212,13 +243,13 @@ func (e *Excel) writeCloudNetwork(num *int, rci ResourceCountInfo) {
 		if rci.comment == "NF" || rci.comment == "NFI" {
 			rci.comment = ""
 		}
-		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts, "", rci.comment})
+		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, nodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts, "", rci.comment})
 		if err != nil {
 			logrus.Errorf("WriteCloudNetwork %s写入数据失败：%v", cell, err)
 			return
 		}
 
-		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts, "", rci.comment)
+		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, nodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts, "", rci.comment)
 
 	}
 
@@ -227,21 +258,61 @@ func (e *Excel) writeCloudNetwork(num *int, rci ResourceCountInfo) {
 func (e *Excel) writeCloudPaaS(num *int, rci ResourceCountInfo) {
 	resourceCategory := rci.resourceCategory
 	_ = rci.resourceSubcategory
+	nodeName := strings.ReplaceAll(rci.NodeName, "_", "-")
 
 	if resourceCategory == "云PAAS" {
 		*num++
 		cell := fmt.Sprintf("A%d", *num)
 
-		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts})
+		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, nodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts})
 		if err != nil {
 			logrus.Errorf("WriteCloudPaaS %s写入数据失败：%v", cell, err)
 			return
 		}
 
-		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, rci.NodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts)
+		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, nodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts)
 
 	}
+}
 
+func (e *Excel) writeOther(num *int, rci ResourceCountInfo) {
+	resourceCategory := rci.resourceCategory
+	_ = rci.resourceSubcategory
+	nodeName := strings.ReplaceAll(rci.NodeName, "_", "-")
+
+	if resourceCategory == "其他" {
+		*num++
+		cell := fmt.Sprintf("A%d", *num)
+
+		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, nodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts})
+		if err != nil {
+			logrus.Errorf("WriteOther %s写入数据失败：%v", cell, err)
+			return
+		}
+
+		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, nodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts)
+
+	}
+}
+
+func (e *Excel) writeSecurity(num *int, rci ResourceCountInfo) {
+	resourceCategory := rci.resourceCategory
+	_ = rci.resourceSubcategory
+	nodeName := strings.ReplaceAll(rci.NodeName, "_", "-")
+
+	if resourceCategory == "云安全" {
+		*num++
+		cell := fmt.Sprintf("A%d", *num)
+
+		err := e.File.SetSheetRow(e.Sheet, cell, &[]interface{}{rci.CloudPool, nodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts})
+		if err != nil {
+			logrus.Errorf("WriteOther %s写入数据失败：%v", cell, err)
+			return
+		}
+
+		logrus.Printf("%s写入数据：%v, %v, %v, %v, %v, %v, %v, %v\n", cell, rci.CloudPool, nodeName, "", rci.resourceCategory, rci.resourceSubcategory, rci.Specification, "个", rci.Counts)
+
+	}
 }
 
 /*-------------------------------------------------------------------------------------------------*/
@@ -355,7 +426,6 @@ func SetCollStyle(countExcel string) {
 	}
 
 	logrus.Printf("已在项目目录下生成\"%v\"\n", countExcel)
-	logrus.Printf("------ end ------\n\n")
 
 }
 
@@ -401,12 +471,6 @@ func (e *Excel) GetColCall(colCallNumber int) []string {
 // CaptureColNumber Title=列标题  TitleLine=标题在哪一行 f=xlsx文件
 func (e *Excel) CaptureColNumber(title string, titleLine int, contains string) int {
 	var titleBool bool
-
-	/*	if xlsx.Sheet == "" {
-		fMap := f.GetSheetMap()
-		xlsx.Sheet = fMap[1]
-		logrus.Printf("%v表格自动获取第一个Sheet：%v\n", xlsx.ResourceType, fMap[1])
-	}*/
 
 	//获取xlsx表格中所有内容
 	rows, err := e.File.GetRows(e.Sheet)

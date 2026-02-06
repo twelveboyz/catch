@@ -16,7 +16,6 @@ import (
 // CMDBFilterFileName
 // 根据传入两个key来匹配定位文件名称
 func CMDBFilterFileName(root string, DirKey string, FileKey []string) string {
-	logrus.Println("------ start CMDB ------")
 
 	var files []string
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -33,7 +32,8 @@ func CMDBFilterFileName(root string, DirKey string, FileKey []string) string {
 	for _, file := range files {
 		var fileBool bool
 		//获取文件相对的路径
-		reFile := RegexFunc(`资源录入表.*`, file)
+
+		reFile := RegexFunc(RegexMatchFileName(DirKey), file)
 
 		if reFile == "" {
 			continue
@@ -43,16 +43,14 @@ func CMDBFilterFileName(root string, DirKey string, FileKey []string) string {
 
 		//循环Key只要匹配中一个则认为符合条件
 		for _, key := range FileKey {
-			//fmt.Println(reFile, "key:", key, strings.Contains(reFile, DirKey), strings.Contains(reFile, key), !strings.Contains(reFile, "~$"))
-			if strings.Contains(reFile, DirKey) && strings.Contains(reFile, key) && !strings.Contains(reFile, "~$") {
+			if strings.Contains(reFile, key) && strings.Contains(reFile, ".xls") && !strings.Contains(reFile, "~$") {
 				fileBool = true
 				break
 			}
 		}
 
 		if fileBool {
-			logrus.Println("正则抓取的相对路径是：", reFile)
-			logrus.Println("最终捕抓文件名称路径是：", file)
+			logrus.Println("捕抓文件名称路径：", file)
 			return file
 		}
 	}
@@ -91,16 +89,16 @@ func ConfigFilterFileName(root string, key1 string, key2 string) string {
 }
 
 func RegexFunc(regex string, Str string) string {
-	r, err := regexp.Compile(regex)
-	if err != nil {
-		fmt.Println("regexp.compile失败", err)
-	}
-	cat := r.FindStringSubmatch(Str)
+	r := regexp.MustCompile(regex)
 
-	if len(cat) == 0 {
+	file := r.FindStringSubmatch(Str)
+
+	if len(file) == 0 {
 		return ""
+	} else if len(file) == 2 {
+		return file[1]
 	} else {
-		return cat[0]
+		return ""
 	}
 
 }
@@ -138,11 +136,8 @@ func InputRoot() string {
 
 func UserInputRoot() (string, string) {
 	root := InputRoot()
-	projectName := RegexFunc(RegexStr, root)
-	if projectName == "" {
-		projectName = RegexFunc(RegexHorizontalBar, root)
-		projectName = strings.Replace(projectName, "-", "_", 1)
-	}
+	projectName := regexp.MustCompile(RegexProjectBatch).FindString(root)
+	projectName = strings.Replace(projectName, "-", "_", 1)
 
 	return root, projectName
 }
@@ -157,7 +152,7 @@ func InputChoose() string {
 		}
 		input = strings.TrimSpace(input)
 
-		if input == "1" || input == "2" || input == "3" {
+		if input == "1" || input == "2" || input == "3" || input == "4" {
 			return input
 		} else if input == "q" {
 			os.Exit(0)
@@ -239,17 +234,18 @@ func Prompt(p string) {
 func Tip() {
 	fmt.Println(`
 |------------------------------------------------------------------------------------------------------------------|
-|version: 1.6.2
+|version: 1.6.5
 |注意事项：                                                                                 
 |一、目录名称命名需要按照"项目ID_项目名称"，命名例子:                                               
 |    - C284_短信平台黑名单模块资源扩容需                                                        
 |    - 移动云-C284_短信平台黑名单模块资源扩容需求-交维材料                                         
 |二、自动抓取Excel表格内容是根据文件夹和文件名称抓取
-|    1.统计本批次交维信息
-|    - 目录名称要包含: "资源录入表" , 文件名称要包含: "资源录入"         
-|    2.汇总本次建设摘要
+|    1：统计本批次交维信息
+|    - 目录名称要包含: "资源录入表" , 文件名称要包含: "资源录入" 
+|    - 目录名称要包含: "订购评审纪要" , 文件名称要包含: "安全资源"
+|    2：汇总本次建设摘要
 |    - 文件名称要包含: "计算资源"、"存储资源"、"网络"、"安全"、"PAAS"
-|    3.汇总本次建设信息
+|    3：汇总本次建设信息
 |    - 文件名称要包含: "计算资源"、"存储资源"、"网络"、"安全"、"PAAS"
 |                                                                                               deployer: Linzheng
 |------------------------------------------------------------------------------------------------------------------|`,
@@ -365,7 +361,7 @@ func init() {
 	windows.GetConsoleMode(stdout, &originalMode)
 	windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
 
-	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetLevel(logrus.InfoLevel)
 
 	logrus.SetFormatter(&logrus.TextFormatter{
 		ForceColors:      true,

@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-// AutoXlsx 传参说明：xlsxFileName=xlsx的文件名称，n是传入需要写入的文件目前有多少行，sliceMap是聚合所有必要的值
-func (e *Excel) AutoXlsx(xlsxFileName string, n int, sliceMap []map[string]string) {
+// WriteDataToExcel 传参说明：xlsxFileName=xlsx的文件名称，n是传入需要写入的文件目前有多少行，sliceMap是聚合所有必要的值
+func (e *Excel) WriteDataToExcel(fileName string, n int, sliceMap []map[string]string) {
 
 	// 创建一个新的工作簿。
-	f, err := excelize.OpenFile(xlsxFileName)
+	f, err := excelize.OpenFile(fileName)
 	if err != nil {
 		logrus.Errorln("打开文件失败", err)
 	}
@@ -74,7 +74,7 @@ func (e *Excel) AutoXlsx(xlsxFileName string, n int, sliceMap []map[string]strin
 			logrus.Println("填写失败", err)
 		}
 
-		err = f.SaveAs(xlsxFileName)
+		err = f.SaveAs(fileName)
 		if err != nil {
 			logrus.Println(err)
 		}

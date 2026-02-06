@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/xuri/excelize/v2"
 	"path/filepath"
@@ -13,6 +14,21 @@ type Excel struct {
 	CopyLine     int
 	TitleLine    int
 	ResourceType string
+	File         *excelize.File
+}
+
+func NewExcel(filename string, titleLine int, resourceType string) (*Excel, error) {
+	f, err := excelize.OpenFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("NewExcel:打开文件失败:%w", err)
+	}
+
+	return &Excel{
+		Filename:     filename,
+		TitleLine:    titleLine,
+		ResourceType: resourceType,
+		File:         f,
+	}, nil
 }
 
 func (e *Excel) OpenFile() *excelize.File {
@@ -24,29 +40,26 @@ func (e *Excel) OpenFile() *excelize.File {
 	return f
 }
 
-func (e *Excel) ComPutExec(root, countXlsx string, f *excelize.File) {
+func (e *Excel) ComPutExec(countExcelFileName string) {
 	//根据第一行标题匹配string，匹配成功后返回标题所在的列对于的切片下标，使用这个下标来获取该标题一列的数据
-	comPutResourceCategoryInt := e.CaptureColNumber(ResourceCategory, e.TitleLine, "y", f)
-	comPutResourceSubcategoryInt := e.CaptureColNumber(ResourceSubcategory, e.TitleLine, "y", f)
-	comPutSpecificationInt := e.CaptureColNumber(Specification, e.TitleLine, "y", f)
-	comPutCloudPoolInt := e.CaptureColNumber(CloudPool, e.TitleLine, "y", f)
-	comPutNodeInt := e.CaptureColNumber(Node, e.TitleLine, "y", f)
-	comPutAZInt := e.CaptureColNumber(AvailabilityZone, e.TitleLine, "y", f)
-	comPutSystemDiskSpecificationInt := e.CaptureColNumber(SystemDiskSpecification, e.TitleLine, "y", f)
-	comPutSystemDiskCapacityInt := e.CaptureColNumber(SystemDiskCapacity, e.TitleLine, "y", f)
+	comPutResourceSubcategoryInt := e.CaptureColNumber(ResourceSubcategory, true)
+	comPutSpecificationInt := e.CaptureColNumber(Specification, true)
+	comPutCloudPoolInt := e.CaptureColNumber(CloudPool, true)
+	comPutNodeInt := e.CaptureColNumber(Node, true)
+	comPutAZInt := e.CaptureColNumber(AvailabilityZone, true)
+	comPutSystemDiskSpecificationInt := e.CaptureColNumber(SystemDiskSpecification, true)
+	comPutSystemDiskCapacityInt := e.CaptureColNumber(SystemDiskCapacity, true)
 
 	//根据下标抓取一列的数据，例如: 下标=-1就是A列、下标=18，则是对于Xlsx表中“S”列的数据
-	comPutResourceCategoryData := e.GetColCall(comPutResourceCategoryInt, f)
-	comPutResourceSubcategoryData := e.GetColCall(comPutResourceSubcategoryInt, f)
-	comPutSpecificationData := e.GetColCall(comPutSpecificationInt, f)
-	comPutCloudPoolData := e.GetColCall(comPutCloudPoolInt, f)
-	comPutNodeData := e.GetColCall(comPutNodeInt, f)
-	comPutAZData := e.GetColCall(comPutAZInt, f)
-	comPutSystemDiskSpecificationData := e.GetColCall(comPutSystemDiskSpecificationInt, f)
-	comPutSystemDiskCapacityData := e.GetColCall(comPutSystemDiskCapacityInt, f)
+	comPutResourceSubcategoryData := e.GetColCall(comPutResourceSubcategoryInt)
+	comPutSpecificationData := e.GetColCall(comPutSpecificationInt)
+	comPutCloudPoolData := e.GetColCall(comPutCloudPoolInt)
+	comPutNodeData := e.GetColCall(comPutNodeInt)
+	comPutAZData := e.GetColCall(comPutAZInt)
+	comPutSystemDiskSpecificationData := e.GetColCall(comPutSystemDiskSpecificationInt)
+	comPutSystemDiskCapacityData := e.GetColCall(comPutSystemDiskCapacityInt)
 
 	comPutSet := Set{
-		ResourceCategory:        comPutResourceCategoryData,
 		ResourceSubcategory:     comPutResourceSubcategoryData,
 		Specification:           comPutSpecificationData,
 		CloudPool:               comPutCloudPoolData,
@@ -71,35 +84,30 @@ func (e *Excel) ComPutExec(root, countXlsx string, f *excelize.File) {
 	logrus.Println("comPutCountsMap打印：", comPutCountsMap)
 
 	//获取表格中是否有数据存在，如果有返回对应int，
-	getRowInt := e.grabXlsxRow(countXlsx)
-	logrus.Printf("%v,写入数据时获取到sheet存在%v数据\n", e.ResourceType, getRowInt)
-	e.AutoXlsx(countXlsx, getRowInt, comPutCountsMap)
+	e.WriteDataToExcel(countExcelFileName, e.grabXlsxRow(countExcelFileName), comPutCountsMap)
 
 }
 
-func (e *Excel) StorageExec(root, countXlsx string, f *excelize.File) {
+func (e *Excel) StorageExec(countExcelFileName string) {
 	//根据第一行标题匹配string，匹配成功后返回标题所在的列对于的切片下标，使用这个下标来获取该标题一列的数据
-	storageResourceCategoryInt := e.CaptureColNumber(ResourceCategory, e.TitleLine, "y", f)
-	storageResourceSubcategoryInt := e.CaptureColNumber(ResourceSubcategory, e.TitleLine, "y", f)
-	storageSpecificationInt := e.CaptureColNumber(Specification, e.TitleLine, "y", f)
-	storageCloudPoolInt := e.CaptureColNumber(CloudPool, e.TitleLine, "y", f)
-	storageNodeInt := e.CaptureColNumber(Node, e.TitleLine, "y", f)
-	storageAZInt := e.CaptureColNumber(AvailabilityZone, e.TitleLine, "y", f)
-	storageCapacityInt := e.CaptureColNumber(Capacity, e.TitleLine, "y", f)
-	storageCommentsInt := e.CaptureColNumber(Comments, e.TitleLine, "y", f)
+	storageResourceSubcategoryInt := e.CaptureColNumber(ResourceSubcategory, true)
+	storageSpecificationInt := e.CaptureColNumber(Specification, true)
+	storageCloudPoolInt := e.CaptureColNumber(CloudPool, true)
+	storageNodeInt := e.CaptureColNumber(Node, true)
+	storageAZInt := e.CaptureColNumber(AvailabilityZone, true)
+	storageCapacityInt := e.CaptureColNumber(Capacity, true)
+	storageCommentsInt := e.CaptureColNumber(Comments, true)
 
 	//根据下标抓取一列的数据，例如: 下标=0就是A列、下标=18，则是对于Xlsx表中“S”列的数据
-	storageResourceCategoryData := e.GetColCall(storageResourceCategoryInt, f)
-	storageResourceSubcategoryData := e.GetColCall(storageResourceSubcategoryInt, f)
-	storageSpecificationData := e.GetColCall(storageSpecificationInt, f)
-	storageCloudPoolData := e.GetColCall(storageCloudPoolInt, f)
-	storageNodeData := e.GetColCall(storageNodeInt, f)
-	storageAZData := e.GetColCall(storageAZInt, f)
-	storageCapacityData := e.GetColCall(storageCapacityInt, f)
-	storageCommentsData := e.GetColCall(storageCommentsInt, f)
+	storageResourceSubcategoryData := e.GetColCall(storageResourceSubcategoryInt)
+	storageSpecificationData := e.GetColCall(storageSpecificationInt)
+	storageCloudPoolData := e.GetColCall(storageCloudPoolInt)
+	storageNodeData := e.GetColCall(storageNodeInt)
+	storageAZData := e.GetColCall(storageAZInt)
+	storageCapacityData := e.GetColCall(storageCapacityInt)
+	storageCommentsData := e.GetColCall(storageCommentsInt)
 
 	storageSet := Set{
-		ResourceCategory:    storageResourceCategoryData,
 		ResourceSubcategory: storageResourceSubcategoryData,
 		Specification:       storageSpecificationData,
 		CloudPool:           storageCloudPoolData,
@@ -118,34 +126,30 @@ func (e *Excel) StorageExec(root, countXlsx string, f *excelize.File) {
 	//打印FillInInformation数据
 	logrus.Println("storageCountsMap打印：", storageCountsMap)
 	//获取表格中是否有数据存在，如果有返回对应int，
-	getRowInt := e.grabXlsxRow(countXlsx)
-	logrus.Printf("%v,获取到sheet存在%v数据\n", e.ResourceType, getRowInt)
-	e.AutoXlsx(countXlsx, getRowInt, storageCountsMap)
+
+	e.WriteDataToExcel(countExcelFileName, e.grabXlsxRow(countExcelFileName), storageCountsMap)
 }
 
-func (e *Excel) SystemDiskExec(root, countXlsx string, f *excelize.File) {
+func (e *Excel) SystemDiskExec(countExcelFileName string) {
 	//根据第一行标题匹配string，匹配成功后返回标题所在的列对于的切片下标，使用这个下标来获取该标题一列的数据
-	SystemDiskResourceCategoryInt := e.CaptureColNumber(ResourceCategory, e.TitleLine, "y", f)
-	SystemDiskResourceSubcategoryInt := e.CaptureColNumber(ResourceSubcategory, e.TitleLine, "y", f)
-	SystemDiskSpecificationInt := e.CaptureColNumber(Specification, e.TitleLine, "y", f)
-	SystemDiskCloudPoolInt := e.CaptureColNumber(CloudPool, e.TitleLine, "y", f)
-	SystemDiskNodeInt := e.CaptureColNumber(Node, e.TitleLine, "y", f)
-	SystemDiskAZInt := e.CaptureColNumber(AvailabilityZone, e.TitleLine, "y", f)
-	SystemDiskSystemDiskSpecificationInt := e.CaptureColNumber(SystemDiskSpecification, e.TitleLine, "y", f)
-	SystemDiskSystemDiskCapacityInt := e.CaptureColNumber(SystemDiskCapacity, e.TitleLine, "y", f)
+	SystemDiskResourceSubcategoryInt := e.CaptureColNumber(ResourceSubcategory, true)
+	SystemDiskSpecificationInt := e.CaptureColNumber(Specification, true)
+	SystemDiskCloudPoolInt := e.CaptureColNumber(CloudPool, true)
+	SystemDiskNodeInt := e.CaptureColNumber(Node, true)
+	SystemDiskAZInt := e.CaptureColNumber(AvailabilityZone, true)
+	SystemDiskSystemDiskSpecificationInt := e.CaptureColNumber(SystemDiskSpecification, true)
+	SystemDiskSystemDiskCapacityInt := e.CaptureColNumber(SystemDiskCapacity, true)
 
 	//根据下标抓取一列的数据，例如: 下标=0就是A列、下标=18，则是对于Xlsx表中“S”列的数据
-	SystemDiskResourceCategoryData := e.GetColCall(SystemDiskResourceCategoryInt, f)
-	SystemDiskResourceSubcategoryData := e.GetColCall(SystemDiskResourceSubcategoryInt, f)
-	SystemDiskSpecificationData := e.GetColCall(SystemDiskSpecificationInt, f)
-	SystemDiskCloudPoolData := e.GetColCall(SystemDiskCloudPoolInt, f)
-	SystemDiskNodeData := e.GetColCall(SystemDiskNodeInt, f)
-	SystemDiskAZData := e.GetColCall(SystemDiskAZInt, f)
-	SystemDiskSystemDiskSpecificationData := e.GetColCall(SystemDiskSystemDiskSpecificationInt, f)
-	SystemDiskSystemDiskCapacityData := e.GetColCall(SystemDiskSystemDiskCapacityInt, f)
+	SystemDiskResourceSubcategoryData := e.GetColCall(SystemDiskResourceSubcategoryInt)
+	SystemDiskSpecificationData := e.GetColCall(SystemDiskSpecificationInt)
+	SystemDiskCloudPoolData := e.GetColCall(SystemDiskCloudPoolInt)
+	SystemDiskNodeData := e.GetColCall(SystemDiskNodeInt)
+	SystemDiskAZData := e.GetColCall(SystemDiskAZInt)
+	SystemDiskSystemDiskSpecificationData := e.GetColCall(SystemDiskSystemDiskSpecificationInt)
+	SystemDiskSystemDiskCapacityData := e.GetColCall(SystemDiskSystemDiskCapacityInt)
 
 	SystemDiskSet := Set{
-		ResourceCategory:        SystemDiskResourceCategoryData,
 		ResourceSubcategory:     SystemDiskResourceSubcategoryData,
 		Specification:           SystemDiskSpecificationData,
 		CloudPool:               SystemDiskCloudPoolData,
@@ -170,39 +174,34 @@ func (e *Excel) SystemDiskExec(root, countXlsx string, f *excelize.File) {
 	logrus.Println("SystemDiskCountsMap打印：", SystemDiskCountsMap)
 
 	//获取表格中是否有数据存在，如果有返回对应int，
-	getRowInt := e.grabXlsxRow(countXlsx)
-	logrus.Printf("%v,获取到sheet存在%v数据\n", e.ResourceType, getRowInt)
-	e.AutoXlsx(countXlsx, getRowInt, SystemDiskCountsMap)
+	e.WriteDataToExcel(countExcelFileName, e.grabXlsxRow(countExcelFileName), SystemDiskCountsMap)
 
 }
 
-func (e *Excel) NetworkExec(root, countXlsx string, f *excelize.File) {
+func (e *Excel) NetworkExec(countExcelFileName string) {
 	//根据第一行标题匹配string，匹配成功后返回标题所在的列对于的切片下标，使用这个下标来获取该标题一列的数据
-	resourceCategoryInt := e.CaptureColNumber(ResourceCategory, e.TitleLine, "y", f)
-	resourceTypeint := e.CaptureColNumber(ResourceSubcategory, e.TitleLine, "n", f)
-	resourceSubcategoryInt := e.CaptureColNumber(NetResourceSubcategory, e.TitleLine, "n", f)
-	specificationInt := e.CaptureColNumber(Specification, e.TitleLine, "y", f)
-	cloudPoolInt := e.CaptureColNumber(CloudPool, e.TitleLine, "y", f)
-	nodeInt := e.CaptureColNumber(Node, e.TitleLine, "y", f)
-	azInt := e.CaptureColNumber(AvailabilityZone, e.TitleLine, "y", f)
-	bandwidthInt := e.CaptureColNumber(Bandwidth, e.TitleLine, "y", f)
+	resourceTypeInt := e.CaptureColNumber(ResourceSubcategory, true)
+	resourceSubcategoryInt := e.CaptureColNumber(NetResourceSubcategory, true)
+	specificationInt := e.CaptureColNumber(Specification, true)
+	cloudPoolInt := e.CaptureColNumber(CloudPool, true)
+	nodeInt := e.CaptureColNumber(Node, true)
+	azInt := e.CaptureColNumber(AvailabilityZone, true)
+	bandwidthInt := e.CaptureColNumber(Bandwidth, true)
 
 	//根据下标抓取一列的数据，例如: 下标=0就是A列、下标=18，则是对于Xlsx表中“S”列的数据
-	resourceCategoryData := e.GetColCall(resourceCategoryInt, f)
-	resourceTypeData := e.GetColCall(resourceTypeint, f)
-	resourceSubcategoryData := e.GetColCall(resourceSubcategoryInt, f)
-	specificationData := e.GetColCall(specificationInt, f)
-	cloudPoolData := e.GetColCall(cloudPoolInt, f)
-	nodeData := e.GetColCall(nodeInt, f)
-	azData := e.GetColCall(azInt, f)
-	bandwidthData := e.GetColCall(bandwidthInt, f)
+	resourceTypeData := e.GetColCall(resourceTypeInt)
+	resourceSubcategoryData := e.GetColCall(resourceSubcategoryInt)
+	specificationData := e.GetColCall(specificationInt)
+	cloudPoolData := e.GetColCall(cloudPoolInt)
+	nodeData := e.GetColCall(nodeInt)
+	azData := e.GetColCall(azInt)
+	bandwidthData := e.GetColCall(bandwidthInt)
 
 	var set Set
-	if len(resourceTypeData) > 0 && len(resourceSubcategoryData) > 0 {
+	if len(resourceTypeData) > 0 {
 		if resourceTypeData[0] != "NF" {
 			//fmt.Println("resourceTypeData-in")
 			set = Set{
-				ResourceCategory:    resourceCategoryData,
 				ResourceSubcategory: resourceTypeData,
 				Specification:       specificationData,
 				CloudPool:           cloudPoolData,
@@ -210,10 +209,11 @@ func (e *Excel) NetworkExec(root, countXlsx string, f *excelize.File) {
 				AvailabilityZone:    azData,
 				Bandwidth:           bandwidthData,
 			}
-		} else if resourceSubcategoryData[0] != "NF" {
+		}
+	} else if len(resourceSubcategoryData) > 0 {
+		if resourceSubcategoryData[0] != "NF" {
 			//fmt.Println("resourceSubcategoryData-in")
 			set = Set{
-				ResourceCategory:    resourceCategoryData,
 				ResourceSubcategory: resourceSubcategoryData,
 				Specification:       specificationData,
 				CloudPool:           cloudPoolData,
@@ -234,32 +234,27 @@ func (e *Excel) NetworkExec(root, countXlsx string, f *excelize.File) {
 	logrus.Println("networkCountsMap打印：", networkCountsMap)
 
 	//获取表格中是否有数据存在，如果有返回对应int，
-	getRowInt := e.grabXlsxRow(countXlsx)
-	logrus.Printf("%v,获取到sheet存在%v数据\n", e.ResourceType, getRowInt)
-	e.AutoXlsx(countXlsx, getRowInt, networkCountsMap)
+	e.WriteDataToExcel(countExcelFileName, e.grabXlsxRow(countExcelFileName), networkCountsMap)
 }
 
-func (e *Excel) SecurityExec(root, countXlsx string, f *excelize.File) {
+func (e *Excel) SecurityExec(countExcelFileName string) {
 	//根据第一行标题匹配string，匹配成功后返回标题所在的列对于的切片下标，使用这个下标来获取该标题一列的数据
-	securityResourceCategoryInt := e.CaptureColNumber(ResourceCategory, e.TitleLine, "y", f)
-	securityResourceSubcategoryInt := e.CaptureColNumber(ResourceSubcategory, e.TitleLine, "y", f)
-	securitySpecificationInt := e.CaptureColNumber(Specification, e.TitleLine, "y", f)
-	securityCloudPoolInt := e.CaptureColNumber(CloudPool, e.TitleLine, "y", f)
-	securityNodeInt := e.CaptureColNumber(Node, e.TitleLine, "y", f)
-	securityAZInt := e.CaptureColNumber(AvailabilityZone, e.TitleLine, "y", f)
-	securityNumberInt := e.CaptureColNumber(Number, e.TitleLine, "y", f)
+	securityResourceSubcategoryInt := e.CaptureColNumber(ResourceSubcategory, true)
+	securitySpecificationInt := e.CaptureColNumber(Specification, true)
+	securityCloudPoolInt := e.CaptureColNumber(CloudPool, true)
+	securityNodeInt := e.CaptureColNumber(Node, true)
+	securityAZInt := e.CaptureColNumber(AvailabilityZone, true)
+	securityNumberInt := e.CaptureColNumber(Number, true)
 
 	//根据下标抓取一列的数据，例如: 下标=0就是A列、下标=18，则是对于Xlsx表中“S”列的数据
-	securityResourceCategoryData := e.GetColCall(securityResourceCategoryInt, f)
-	securityResourceSubcategoryData := e.GetColCall(securityResourceSubcategoryInt, f)
-	securitySpecificationData := e.GetColCall(securitySpecificationInt, f)
-	securityCloudPoolData := e.GetColCall(securityCloudPoolInt, f)
-	securityNodeData := e.GetColCall(securityNodeInt, f)
-	securityAZData := e.GetColCall(securityAZInt, f)
-	securityNumberData := e.GetColCall(securityNumberInt, f)
+	securityResourceSubcategoryData := e.GetColCall(securityResourceSubcategoryInt)
+	securitySpecificationData := e.GetColCall(securitySpecificationInt)
+	securityCloudPoolData := e.GetColCall(securityCloudPoolInt)
+	securityNodeData := e.GetColCall(securityNodeInt)
+	securityAZData := e.GetColCall(securityAZInt)
+	securityNumberData := e.GetColCall(securityNumberInt)
 
 	securitySet := Set{
-		ResourceCategory:    securityResourceCategoryData,
 		ResourceSubcategory: securityResourceSubcategoryData,
 		Specification:       securitySpecificationData,
 		CloudPool:           securityCloudPoolData,
@@ -275,40 +270,39 @@ func (e *Excel) SecurityExec(root, countXlsx string, f *excelize.File) {
 	logrus.Println("securityCountMap打印：", securityCountMap)
 
 	//获取表格中是否有数据存在，如果有返回对应int，
-	getRowInt := e.grabXlsxRow(countXlsx)
-	logrus.Printf("%v,获取到sheet存在%v数据\n", e.ResourceType, getRowInt)
-	e.AutoXlsx(countXlsx, getRowInt, securityCountMap)
+	e.WriteDataToExcel(countExcelFileName, e.grabXlsxRow(countExcelFileName), securityCountMap)
 
-	/*	for _, m := range securityCountMapXlsxData {
-		fmt.Println("test=", m)
-	}*/
+	/*	for _, m := range securityCountMapXlsxData
+			fmt.Println("test=", m)
+		}
+		}*/
 
 }
 
-func (e *Excel) PAASExec(root, countXlsx string, f *excelize.File) {
+func (e *Excel) PAASExec(countExcelFileName string) {
 	//根据第一行标题匹配string，匹配成功后返回标题所在的列对于的切片下标，使用这个下标来获取该标题一列的数据
-	PAASResourceCategoryInt := e.CaptureColNumber(ResourceCategory, e.TitleLine, "y", f)
-	PAASResourceSubcategoryInt := e.CaptureColNumber(ResourceSubcategory, e.TitleLine, "y", f)
-	PAASSpecificationInt := e.CaptureColNumber(Specification, e.TitleLine, "y", f)
-	PAASCloudPoolInt := e.CaptureColNumber(CloudPool, e.TitleLine, "y", f)
-	PAASNodeInt := e.CaptureColNumber(Node, e.TitleLine, "y", f)
-	PAASAZInt := e.CaptureColNumber(AvailabilityZone, e.TitleLine, "y", f)
+	//PAASResourceCategoryInt := e.CaptureColNumber(ResourceCategory, true)
+	paasResourceSubcategoryInt := e.CaptureColNumber(ResourceSubcategory, true)
+	paasSpecificationInt := e.CaptureColNumber(Specification, true)
+	paasCloudPoolInt := e.CaptureColNumber(CloudPool, true)
+	paasNodeInt := e.CaptureColNumber(Node, true)
+	paasAZInt := e.CaptureColNumber(AvailabilityZone, true)
 
 	//根据下标抓取一列的数据，例如: 下标=0就是A列、下标=18，则是对于Xlsx表中“S”列的数据
-	PAASResourceCategoryData := e.GetColCall(PAASResourceCategoryInt, f)
-	PAASResourceSubcategoryData := e.GetColCall(PAASResourceSubcategoryInt, f)
-	PAASSpecificationData := e.GetColCall(PAASSpecificationInt, f)
-	PAASCloudPoolData := e.GetColCall(PAASCloudPoolInt, f)
-	PAASNodeData := e.GetColCall(PAASNodeInt, f)
-	PAASAZData := e.GetColCall(PAASAZInt, f)
+	//PAASResourceCategoryData := e.GetColCall(PAASResourceCategoryInt)
+	paasResourceSubcategoryData := e.GetColCall(paasResourceSubcategoryInt)
+	paasSpecificationData := e.GetColCall(paasSpecificationInt)
+	paasCloudPoolData := e.GetColCall(paasCloudPoolInt)
+	paasNodeData := e.GetColCall(paasNodeInt)
+	paasAZData := e.GetColCall(paasAZInt)
 
 	PAASSet := Set{
-		ResourceCategory:    PAASResourceCategoryData,
-		ResourceSubcategory: PAASResourceSubcategoryData,
-		Specification:       PAASSpecificationData,
-		CloudPool:           PAASCloudPoolData,
-		Node:                PAASNodeData,
-		AvailabilityZone:    PAASAZData,
+		//ResourceCategory:    PAASResourceCategoryData,
+		ResourceSubcategory: paasResourceSubcategoryData,
+		Specification:       paasSpecificationData,
+		CloudPool:           paasCloudPoolData,
+		Node:                paasNodeData,
+		AvailabilityZone:    paasAZData,
 	}
 
 	//合并统计两列数据共出现的次数，并且返回一个[][]string类型的统计数据
@@ -326,14 +320,12 @@ func (e *Excel) PAASExec(root, countXlsx string, f *excelize.File) {
 	logrus.Println("PAASCountsMap打印：", PAASCountsMap)
 
 	//获取表格中是否有数据存在，如果有返回对应int，
-	getRowInt := e.grabXlsxRow(countXlsx)
-	logrus.Printf("%v,获取到sheet存在%v数据\n", e.ResourceType, getRowInt)
-	e.AutoXlsx(countXlsx, getRowInt, PAASCountsMap)
+	e.WriteDataToExcel(countExcelFileName, e.grabXlsxRow(countExcelFileName), PAASCountsMap)
 }
 
 // GetColCall *传参说明
 // colCallNumber = 根据切片下标，获取某一列数据的内容   f=xlsx文件
-func (e *Excel) GetColCall(colCallNumber int, f *excelize.File) []string {
+func (e *Excel) GetColCall(colCallNumber int) []string {
 	var Slice []string
 	//如果获取xlsx行数是空则捕获切片超出index的panic报错，原因是获取xlsx表格的行数内容是空的
 	defer func() {
@@ -342,7 +334,7 @@ func (e *Excel) GetColCall(colCallNumber int, f *excelize.File) []string {
 		}
 	}()
 
-	rows, err := f.GetRows(e.Sheet)
+	rows, err := e.File.GetRows(e.Sheet)
 	if err != nil {
 		logrus.Fatal("读取Sheet失败:", err)
 	}
@@ -356,7 +348,7 @@ func (e *Excel) GetColCall(colCallNumber int, f *excelize.File) []string {
 			Slice = append(Slice, row[colCallNumber])
 
 			//logrus.Println(row[colCallNumber]) //排错 打印获取到的每一行数据
-			//如果传参为-1，则默认填充NotFound(NF)
+			//如果传参为-1，则默认填充NotFound(N)
 		} else if i >= (e.CopyLine-1) && colCallNumber == -1 {
 			Slice = append(Slice, "NF")
 
@@ -371,22 +363,21 @@ func (e *Excel) GetColCall(colCallNumber int, f *excelize.File) []string {
 }
 
 // CaptureColNumber Title=列标题  TitleLine=标题在哪一行 f=xlsx文件
-func (e *Excel) CaptureColNumber(title string, titleLine int, contains string, f *excelize.File) int {
+func (e *Excel) CaptureColNumber(title string, contains bool) int {
 	var titleBool bool
 
 	//获取xlsx表格中所有内容
-	rows, err := f.GetRows(e.Sheet)
+	rows, err := e.File.GetRows(e.Sheet)
 	if err != nil {
 		logrus.Fatal("获取行内容失败：", err)
 	}
 
 	//rows是保存每一行数据的全部内容 1xxxx 2xxxx 3xxxxx
 	//row是字符串，循环第一行的每个标题  例子：实例ID	实例名称	实例状态	可用区······
-	for i, row := range rows[titleLine-1] {
-		if contains == "y" {
+	for i, row := range rows[e.TitleLine-1] {
+		if contains {
 			titleBool = strings.Contains(row, title)
-
-		} else if contains == "n" {
+		} else {
 			titleBool = row == title
 		}
 
@@ -401,20 +392,21 @@ func (e *Excel) CaptureColNumber(title string, titleLine int, contains string, f
 	return -1
 }
 
-func (e *Excel) ForGetSheet(f *excelize.File) []string {
+func (e *Excel) ForGetSheet() []string {
 	var slice []string
-	fMap := f.GetSheetMap()
+
+	fMap := e.File.GetSheetMap()
 	logrus.Println("fMap=", fMap)
 	for k, v := range fMap {
 		b := !strings.Contains(v, "excelhidesheetname")
-		visibleBool, _ := f.GetSheetVisible(v)
-		logrus.Println("可见性 sheet=", v, "bool=", visibleBool)
+		visibleBool, _ := e.File.GetSheetVisible(v)
+		//logrus.Println("可见性 sheet=", v, "bool=", visibleBool)
 		if b && visibleBool {
 			//logrus.Printf("sheet=%v，key: %v value: %v", xlsx.ResourceType, k, v) //排错使用 查看获取到的每一个sheet名称
 			//xlsx.Sheet = fMap[i]
 
 			//sheet工作表行数要大于三行才视为有效sheet
-			rows, err := f.GetRows(fMap[k])
+			rows, err := e.File.GetRows(fMap[k])
 			if err != nil {
 				logrus.Println("获取行失败：", err)
 			}
@@ -478,6 +470,7 @@ func (e *Excel) grabXlsxRow(xlsxFileName string) int {
 	if err != nil {
 		logrus.Println("获取行失败", err)
 	}
+	logrus.Printf("%v,写入数据时获取到sheet存在%v数据\n", e.ResourceType, len(rows))
 	return len(rows)
 }
 

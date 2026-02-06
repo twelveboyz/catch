@@ -75,8 +75,6 @@ func TotalResource(set Set) [][]string {
 		classifiedStatistics(resourceCategory, comment, aggregatedResources, key)
 	}
 
-	//AddECSSystemDiskCount(aggregatedResources)
-
 	return splitKey(aggregatedResources)
 }
 
@@ -98,6 +96,8 @@ func CombinationKey(node, resourceCategory, cloudPoolAndResourceSubcategory, spe
 		}
 	case "云网络":
 		key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, comment)
+	case "云安全":
+		key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, "")
 	default:
 		key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, "")
 	}
@@ -116,12 +116,7 @@ func classifiedStatistics(resourceCategory, comment string, aggregatedResources 
 	switch resourceCategory {
 	case "弹性计算", "KCS":
 		aggregatedResources[key].totalCounts++
-	/*	capInt, err := strconv.Atoi(comment)
-		if err != nil {
-			logrus.Println("CapInt获取Atoi转换失败", err)
-		}
-		//统计相同小类的总容量
-		aggregatedResources[key].capacityCounts = aggregatedResources[key].capacityCounts + capInt*/
+
 	case "云存储-系统盘":
 		aggregatedResources[key].totalCounts++
 
@@ -145,6 +140,13 @@ func classifiedStatistics(resourceCategory, comment string, aggregatedResources 
 
 		aggregatedResources[key].SingleCapacitySlice = append(aggregatedResources[key].SingleCapacitySlice, capInt)
 
+	case "云安全":
+		numInt, err := strconv.Atoi(comment)
+		if err != nil {
+			logrus.Warnln("NumInt获取Atoi转换失败", err)
+		}
+
+		aggregatedResources[key].totalCounts += numInt
 	default:
 		aggregatedResources[key].totalCounts++
 	}
@@ -249,10 +251,17 @@ func SplitCloudPortAndResourceSubcategory(cloudPoolAndResourceSubcategory string
 func slicesToStruct(slices [][]string) []ResourceCountInfo {
 	var resourceCountInfos []ResourceCountInfo
 	for _, slice := range slices {
+		var cloudPool, resourceSubcategory string
 		nodeName := slice[0]
 		resourceCategory := slice[1]
 		cloudPoolAndResourceSubcategory := slice[2]
-		cloudPool, resourceSubcategory := SplitCloudPortAndResourceSubcategory(cloudPoolAndResourceSubcategory)
+		if resourceCategory == "云安全" {
+			cloudPool = "移动云"
+			resourceSubcategory = cloudPoolAndResourceSubcategory
+		} else {
+			cloudPool, resourceSubcategory = SplitCloudPortAndResourceSubcategory(cloudPoolAndResourceSubcategory)
+		}
+
 		specification := slice[3]
 		comment := slice[4]
 		counts := slice[5]

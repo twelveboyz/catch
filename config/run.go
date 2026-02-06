@@ -10,7 +10,7 @@ func Run() {
 	root := internal.InputRoot()
 
 	temp := "temp"
-	countXlsx := temp + "/建设信息统计表.xlsx"
+	countExcelFileName := temp + "/建设信息统计表.xlsx"
 	dest := root + "/建设信息统计表.xlsx"
 
 	//创建临时目录并把项目复制到临时目录中
@@ -21,7 +21,7 @@ func Run() {
 	}
 
 	defer func() {
-		err = internal.MoveFile(countXlsx, dest)
+		err = internal.MoveFile(countExcelFileName, dest)
 		if err != nil {
 			logrus.Error(err)
 			return
@@ -35,10 +35,10 @@ func Run() {
 	}()
 
 	//创建一个新的excel表格
-	CreateXlsx(countXlsx)
+	CreateXlsx(countExcelFileName)
 
 	//插入excel表格表头数据
-	Insert(countXlsx)
+	Insert(countExcelFileName)
 
 	//日志
 	logfile := internal.LogFunc(root)
@@ -49,170 +49,124 @@ func Run() {
 	}()
 
 	/*----------------------------------------------计算----------------------------------------------*/
-	ComPutFileName := internal.ConfigFilterFileName(root, ".xls", "计算资源")
-
-	if ComPutFileName != "" {
-		//创建xlsx对象
-		comPutExcel := &Excel{Filename: ComPutFileName, Sheet: "", CopyLine: 0, TitleLine: 3, ResourceType: "计算资源"}
-		//打开一个xlsx文件
-		f := comPutExcel.OpenFile()
-		defer func() {
-			if err := f.Close(); err != nil {
-				logrus.Fatal("文件关闭失败", err)
-			}
-		}()
-
-		//获取表格所有的sheet
-		sheets := comPutExcel.ForGetSheet(f)
-		logrus.Println("获取有效的Sheet=", sheets)
-		for _, sheet := range sheets {
-			logrus.Println("sheet=", sheet)
-			LineInt := DetermineCase(ComPutFileName, sheet)
-			comPutExcel.CopyLine = LineInt
-			comPutExcel.Sheet = sheet
-			comPutExcel.ComPutExec(root, countXlsx, f)
+	if comPutFileName := internal.ConfigFilterFileName(root, ".xls", "计算资源"); comPutFileName != "" {
+		comPutExcel, err := NewExcel(comPutFileName, 3, "计算资源")
+		if err != nil {
+			logrus.Error(err)
+			return
 		}
 
+		//获取表格所有的sheet
+		for _, sheet := range comPutExcel.ForGetSheet() {
+			logrus.Println("sheet=", sheet)
+			comPutExcel.CopyLine = DetermineCase(comPutFileName, sheet)
+			comPutExcel.Sheet = sheet
+			comPutExcel.ComPutExec(countExcelFileName)
+		}
 	} else {
 		internal.Prompt("计算资源")
 	}
 
 	/*----------------------------------------------系统盘----------------------------------------------*/
-	SystemDiskFileName := internal.ConfigFilterFileName(root, ".xls", "计算资源")
-
-	if ComPutFileName != "" {
+	if systemDiskFileName := internal.ConfigFilterFileName(root, ".xls", "计算资源"); systemDiskFileName != "" {
 		//创建xlsx对象
-		systemDiskexcel := &Excel{Filename: SystemDiskFileName, Sheet: "", CopyLine: 0, TitleLine: 3, ResourceType: "系统盘资源"}
-		//打开一个xlsx文件
-		f := systemDiskexcel.OpenFile()
-		defer func() {
-			if err := f.Close(); err != nil {
-				logrus.Fatal("文件关闭失败", err)
-			}
-		}()
-
-		//获取表格所有的sheet
-		sheets := systemDiskexcel.ForGetSheet(f)
-		logrus.Println("获取有效的Sheet=", sheets)
-		for _, sheet := range sheets {
-			logrus.Println("sheet=", sheet)
-			LineInt := DetermineCase(SystemDiskFileName, sheet)
-			systemDiskexcel.CopyLine = LineInt
-			systemDiskexcel.Sheet = sheet
-			systemDiskexcel.SystemDiskExec(root, countXlsx, f)
+		systemDiskexcel, err := NewExcel(systemDiskFileName, 3, "系统盘资源")
+		if err != nil {
+			logrus.Error(err)
+			return
 		}
 
+		//获取表格所有的sheet
+		for _, sheet := range systemDiskexcel.ForGetSheet() {
+			logrus.Println("sheet=", sheet)
+			systemDiskexcel.CopyLine = DetermineCase(systemDiskFileName, sheet)
+			systemDiskexcel.Sheet = sheet
+			systemDiskexcel.SystemDiskExec(countExcelFileName)
+		}
 	} else {
 		internal.Prompt("系统盘资源")
 	}
 
 	/*----------------------------------------------存储------------------------------------------------*/
-	storageFileName := internal.ConfigFilterFileName(root, ".xls", "存储资源")
+	if storageFileName := internal.ConfigFilterFileName(root, ".xls", "存储资源"); storageFileName != "" {
 
-	if storageFileName != "" {
-		storageExcel := &Excel{Filename: storageFileName, Sheet: "", CopyLine: 0, TitleLine: 3, ResourceType: "存储资源"}
-		f := storageExcel.OpenFile()
-		defer func() {
-			if err := f.Close(); err != nil {
-				logrus.Fatal("文件关闭失败", err)
-			}
-		}()
-
-		//获取表格所有的sheet
-		sheets := storageExcel.ForGetSheet(f)
-		logrus.Println("获取有效的Sheet=", sheets)
-		for _, sheet := range sheets {
-			logrus.Println("sheet=", sheet)
-			LineInt := DetermineCase(storageFileName, sheet)
-			storageExcel.CopyLine = LineInt
-			storageExcel.Sheet = sheet
-			storageExcel.StorageExec(root, countXlsx, f)
+		storageExcel, err := NewExcel(storageFileName, 3, "存储资源")
+		if err != nil {
+			logrus.Error(err)
+			return
 		}
 
+		//获取表格所有的sheet
+		for _, sheet := range storageExcel.ForGetSheet() {
+			logrus.Println("sheet=", sheet)
+			storageExcel.CopyLine = DetermineCase(storageFileName, sheet)
+			storageExcel.Sheet = sheet
+			storageExcel.StorageExec(countExcelFileName)
+		}
 	} else {
 		internal.Prompt("存储资源")
 	}
 
 	/*----------------------------------------------云网络---------------------------------------------------*/
-	NetworkFileName := internal.ConfigFilterFileName(root, ".xls", "网络")
+	if networkFileName := internal.ConfigFilterFileName(root, ".xls", "网络"); networkFileName != "" {
+		networkExcel, err := NewExcel(networkFileName, 3, "网络资源")
+		if err != nil {
+			logrus.Error(err)
+			return
+		}
 
-	if NetworkFileName != "" {
-		networkExcel := &Excel{Filename: NetworkFileName, Sheet: "", CopyLine: 0, TitleLine: 3, ResourceType: "网络资源"}
-
-		f := networkExcel.OpenFile()
-		defer func() {
-			if err := f.Close(); err != nil {
-				logrus.Fatal("文件关闭失败", err)
-			}
-		}()
 		//获取表格所有的sheet
-		sheets := networkExcel.ForGetSheet(f)
-		logrus.Println("获取有效的Sheet=", sheets)
-		for _, sheet := range sheets {
+		for _, sheet := range networkExcel.ForGetSheet() {
 			logrus.Println("sheet=", sheet)
-			LineInt := DetermineCase(NetworkFileName, sheet)
+			LineInt := DetermineCase(networkFileName, sheet)
 			networkExcel.CopyLine = LineInt
 			networkExcel.Sheet = sheet
-			networkExcel.NetworkExec(root, countXlsx, f)
+			networkExcel.NetworkExec(countExcelFileName)
 		}
 	} else {
-		internal.Prompt("云网络资源")
+		internal.Prompt("网络资源")
 	}
 
 	/*----------------------------------------------云安全---------------------------------------------------*/
-	SecurityFileName := internal.ConfigFilterFileName(root, ".xls", "安全")
+	securityFileName := internal.ConfigFilterFileName(root, ".xls", "安全")
 
-	if SecurityFileName != "" {
-		securityExcel := &Excel{Filename: SecurityFileName, Sheet: "", CopyLine: 0, TitleLine: 3, ResourceType: "安全资源"}
-
-		f := securityExcel.OpenFile()
-		defer func() {
-			if err := f.Close(); err != nil {
-				logrus.Fatal("文件关闭失败", err)
-			}
-		}()
+	if securityFileName != "" {
+		securityExcel, err := NewExcel(securityFileName, 3, "安全资源")
+		if err != nil {
+			logrus.Error(err)
+			return
+		}
 
 		//获取表格所有的sheet
-		sheets := securityExcel.ForGetSheet(f)
-		logrus.Println("获取有效的Sheet=", sheets)
-		for _, sheet := range sheets {
+		for _, sheet := range securityExcel.ForGetSheet() {
 			logrus.Println("sheet=", sheet)
-			LineInt := DetermineCase(SecurityFileName, sheet)
-			securityExcel.CopyLine = LineInt
+			securityExcel.CopyLine = DetermineCase(securityFileName, sheet)
 			securityExcel.Sheet = sheet
-			securityExcel.SecurityExec(root, countXlsx, f)
+			securityExcel.SecurityExec(countExcelFileName)
 		}
 
 	} else {
-		internal.Prompt("云安全资源")
+		internal.Prompt("安全资源")
 	}
 
 	/*----------------------------------------------PAAS---------------------------------------------------*/
-	PaasFileName := internal.ConfigFilterFileName(root, ".xls", "PAAS")
+	if paasFileName := internal.ConfigFilterFileName(root, ".xls", "PAAS"); paasFileName != "" {
 
-	if PaasFileName != "" {
-		PaasExcel := &Excel{Filename: PaasFileName, Sheet: "", CopyLine: 0, TitleLine: 3, ResourceType: "PAAS资源"}
-
-		f := PaasExcel.OpenFile()
-		defer func() {
-			if err := f.Close(); err != nil {
-				logrus.Fatal("文件关闭失败", err)
-			}
-		}()
-
-		//获取表格所有的sheet
-		sheets := PaasExcel.ForGetSheet(f)
-		logrus.Println("获取有效的Sheet=", sheets)
-		for _, sheet := range sheets {
-			logrus.Println("sheet=", sheet)
-			LineInt := DetermineCase(PaasFileName, sheet)
-			PaasExcel.CopyLine = LineInt
-			PaasExcel.Sheet = sheet
-			PaasExcel.PAASExec(root, countXlsx, f)
+		PaasExcel, err := NewExcel(paasFileName, 3, "PAAS资源")
+		if err != nil {
+			logrus.Error(err)
+			return
 		}
 
+		//获取表格所有的sheet
+		for _, sheet := range PaasExcel.ForGetSheet() {
+			logrus.Println("sheet=", sheet)
+			PaasExcel.CopyLine = DetermineCase(paasFileName, sheet)
+			PaasExcel.Sheet = sheet
+			PaasExcel.PAASExec(countExcelFileName)
+		}
 	} else {
-		internal.Prompt("PAAS")
+		internal.Prompt("PAAS资源")
 	}
 
 	/*--------------------------------------------设置单格式------------------------------------------------*/
@@ -220,12 +174,12 @@ func Run() {
 
 	// 10 是列的长度，10 = J
 	for i := 0; i < 10; i++ {
-		var runeLetter = 'A' + int32(i)             //每次循环A+1 = B +1  = C
-		AutoWidth(countXlsx, string(runeLetter), i) //colStr = A 那colInt 必须等于0
+		var runeLetter = 'A' + int32(i)                      //每次循环A+1 = B +1  = C
+		AutoWidth(countExcelFileName, string(runeLetter), i) //colStr = A 那colInt 必须等于0
 	}
 	//自动设置边框
-	SetCollStyle(countXlsx)
+	SetCollStyle(countExcelFileName)
 
 	/*----------------------------------------------end---------------------------------------------------*/
-	logrus.Printf("已在项目目录下生成\"%v\"\n", countXlsx)
+	logrus.Printf("已在项目目录下生成\"%v\"\n", countExcelFileName)
 }

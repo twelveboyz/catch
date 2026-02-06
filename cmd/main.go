@@ -5,6 +5,7 @@ import (
 	"Catch/config"
 	"Catch/daily"
 	"Catch/internal"
+	"Catch/resourceCount"
 )
 
 func main() {
@@ -20,6 +21,8 @@ func main() {
 			daily.Run()
 		case "3":
 			config.Run()
+		case "4":
+			resourceCount.Run()
 		}
 	}
 }

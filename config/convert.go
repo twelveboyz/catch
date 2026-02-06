@@ -9,7 +9,6 @@ import (
 )
 
 type Set struct {
-	ResourceCategory        []string
 	ResourceSubcategory     []string
 	Specification           []string
 	CloudPool               []string
@@ -41,13 +40,12 @@ func TotalResourceSliceToMap(countSet [][]string, ResourceType string) []map[str
 			countMap[k]["CloudPool"] = v[0]
 			countMap[k]["Node"] = v[1]
 			countMap[k]["AvailabilityZone"] = v[2]
-			countMap[k]["ResourceCategory"] = v[3]
-			countMap[k]["ResourceSubcategory"] = v[4]
-			countMap[k]["Specification"] = v[5]
-			countMap[k]["Comments"] = v[6]
-			countMap[k]["Counts"] = v[7]
-			countMap[k]["Capacity"] = v[8]
-			countMap[k]["SingleCapacity"] = v[9]
+			countMap[k]["ResourceSubcategory"] = v[3]
+			countMap[k]["Specification"] = v[4]
+			countMap[k]["Comments"] = v[5]
+			countMap[k]["Counts"] = v[6]
+			countMap[k]["Capacity"] = v[7]
+			countMap[k]["SingleCapacity"] = v[8]
 		}
 	case "计算资源":
 		for k, v := range countSet {
@@ -55,10 +53,9 @@ func TotalResourceSliceToMap(countSet [][]string, ResourceType string) []map[str
 			countMap[k]["CloudPool"] = v[0]
 			countMap[k]["Node"] = v[1]
 			countMap[k]["AvailabilityZone"] = v[2]
-			countMap[k]["ResourceCategory"] = v[3]
-			countMap[k]["ResourceSubcategory"] = v[4]
-			countMap[k]["Specification"] = v[5]
-			countMap[k]["Counts"] = v[6]
+			countMap[k]["ResourceSubcategory"] = v[3]
+			countMap[k]["Specification"] = v[4]
+			countMap[k]["Counts"] = v[5]
 		}
 	case "系统盘资源":
 		for k, v := range countSet {
@@ -66,11 +63,10 @@ func TotalResourceSliceToMap(countSet [][]string, ResourceType string) []map[str
 			countMap[k]["CloudPool"] = v[0]
 			countMap[k]["Node"] = v[1]
 			countMap[k]["AvailabilityZone"] = v[2]
-			countMap[k]["ResourceCategory"] = v[3]
-			countMap[k]["ResourceSubcategory"] = v[4]
-			countMap[k]["SystemDiskSpecification"] = v[5]
-			countMap[k]["SystemDiskCapacity"] = v[6]
-			countMap[k]["Counts"] = v[7]
+			countMap[k]["ResourceSubcategory"] = v[3]
+			countMap[k]["SystemDiskSpecification"] = v[4]
+			countMap[k]["SystemDiskCapacity"] = v[5]
+			countMap[k]["Counts"] = v[6]
 		}
 	case "网络资源":
 		for k, v := range countSet {
@@ -78,11 +74,10 @@ func TotalResourceSliceToMap(countSet [][]string, ResourceType string) []map[str
 			countMap[k]["CloudPool"] = v[0]
 			countMap[k]["Node"] = v[1]
 			countMap[k]["AvailabilityZone"] = v[2]
-			countMap[k]["ResourceCategory"] = v[3]
-			countMap[k]["ResourceSubcategory"] = v[4]
-			countMap[k]["Specification"] = v[5]
-			countMap[k]["Bandwidth"] = v[6]
-			countMap[k]["Counts"] = v[7]
+			countMap[k]["ResourceSubcategory"] = v[3]
+			countMap[k]["Specification"] = v[4]
+			countMap[k]["Bandwidth"] = v[5]
+			countMap[k]["Counts"] = v[6]
 		}
 	default:
 		for k, v := range countSet {
@@ -90,10 +85,9 @@ func TotalResourceSliceToMap(countSet [][]string, ResourceType string) []map[str
 			countMap[k]["CloudPool"] = v[0]
 			countMap[k]["Node"] = v[1]
 			countMap[k]["AvailabilityZone"] = v[2]
-			countMap[k]["ResourceCategory"] = v[3]
-			countMap[k]["ResourceSubcategory"] = v[4]
-			countMap[k]["Specification"] = v[5]
-			countMap[k]["Counts"] = v[6]
+			countMap[k]["ResourceSubcategory"] = v[3]
+			countMap[k]["Specification"] = v[4]
+			countMap[k]["Counts"] = v[5]
 		}
 	}
 	return countMap
@@ -104,8 +98,8 @@ func ComPutTotalResource(set Set) [][]string {
 	// 创建一个 map 来存储聚合后的结果和规格统计
 	aggregatedResources := make(map[string]*aggregatedData)
 
-	for i := 0; i < len(set.ResourceCategory); i++ {
-		key := fmt.Sprintf("%v#&%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceCategory[i], set.ResourceSubcategory[i], set.Specification[i])
+	for i := 0; i < len(set.CloudPool); i++ {
+		key := fmt.Sprintf("%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceSubcategory[i], set.Specification[i])
 
 		// 如果 key 不存在于 map 中，则初始化它，并使用指针 //key是全部参数组成的key，value是int,map[string]int 类型
 		if _, exists := aggregatedResources[key]; !exists {
@@ -130,7 +124,7 @@ func ComPutTotalResource(set Set) [][]string {
 		Slice = append(Slice, strconv.Itoa(data.totalCounts))
 
 		//跳过资源小类等于NF或者NFI的空行
-		if Slice[4] == "NF" || Slice[4] == "NFI" {
+		if Slice[3] == "NF" || Slice[3] == "NFI" {
 			continue
 		}
 
@@ -150,8 +144,8 @@ func SystemDiskTotalResource(set Set) [][]string {
 	// 创建一个 map 来存储聚合后的结果和规格统计
 	aggregatedResources := make(map[string]*aggregatedData)
 
-	for i := 0; i < len(set.ResourceCategory); i++ {
-		key := fmt.Sprintf("%v#&%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceCategory[i], set.ResourceSubcategory[i], set.SystemDiskSpecification[i])
+	for i := 0; i < len(set.CloudPool); i++ {
+		key := fmt.Sprintf("%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceSubcategory[i], set.SystemDiskSpecification[i])
 
 		// 如果 key 不存在于 map 中，则初始化它，并使用指针 //key是全部参数组成的key，value是int,map[string]int 类型
 		if _, exists := aggregatedResources[key]; !exists {
@@ -187,7 +181,7 @@ func SystemDiskTotalResource(set Set) [][]string {
 		Slice = append(Slice, strconv.Itoa(data.capacityCounts), strconv.Itoa(data.totalCounts))
 
 		//跳过资源小类等于NF或者NFI的空行
-		if Slice[4] == "NF" || Slice[4] == "NFI" {
+		if Slice[3] == "NF" || Slice[3] == "NFI" {
 			continue
 		}
 
@@ -207,12 +201,12 @@ func StorageTotalResource(set Set) [][]string {
 	// 创建一个 map 来存储聚合后的结果和规格统计
 	aggregatedResources := make(map[string]*aggregatedData)
 
-	for i := 0; i < len(set.ResourceCategory); i++ {
+	for i := 0; i < len(set.CloudPool); i++ {
 		var key string
 		if set.ResourceSubcategory[i] == "对象存储" && set.Comments[i] != "" {
-			key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceCategory[i], set.ResourceSubcategory[i], set.Specification[i], set.Comments[i])
+			key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceSubcategory[i], set.Specification[i], set.Comments[i])
 		} else {
-			key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceCategory[i], set.ResourceSubcategory[i], set.Specification[i], "")
+			key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceSubcategory[i], set.Specification[i], "")
 		}
 
 		// 如果 key 不存在于 map 中，则初始化它，并使用指针 //key是全部参数组成的key，value是int,map[string]int 类型
@@ -258,7 +252,7 @@ func StorageTotalResource(set Set) [][]string {
 
 		//fmt.Println("Slice=", Slice)
 		//跳过资源小类等于NF或者NFI的空行
-		if Slice[4] == "NF" || Slice[4] == "NFI" {
+		if Slice[3] == "NF" || Slice[3] == "NFI" {
 			continue
 		}
 
@@ -295,8 +289,8 @@ func NetworkTotalResource(set Set) [][]string {
 	// 创建一个 map 来存储聚合后的结果和规格统计
 	aggregatedResources := make(map[string]*aggregatedData)
 
-	for i := 0; i < len(set.ResourceCategory); i++ {
-		key := fmt.Sprintf("%v#&%v#&%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceCategory[i], set.ResourceSubcategory[i], set.Specification[i], set.Bandwidth[i])
+	for i := 0; i < len(set.CloudPool); i++ {
+		key := fmt.Sprintf("%v#&%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceSubcategory[i], set.Specification[i], set.Bandwidth[i])
 
 		// 如果 key 不存在于 map 中，则初始化它，并使用指针 //key是全部参数组成的key，value是int,map[string]int 类型
 		if _, exists := aggregatedResources[key]; !exists {
@@ -322,7 +316,7 @@ func NetworkTotalResource(set Set) [][]string {
 
 		//fmt.Println("Slice=", Slice)
 		//跳过资源小类等于NF或者NFI的空行
-		if Slice[4] == "NF" || Slice[4] == "NFI" {
+		if Slice[3] == "NF" || Slice[3] == "NFI" {
 			continue
 		}
 
@@ -342,8 +336,8 @@ func SecurityTotalResource(set Set) [][]string {
 	// 创建一个 map 来存储聚合后的结果和规格统计
 	aggregatedResources := make(map[string]*aggregatedData)
 
-	for i := 0; i < len(set.ResourceCategory); i++ {
-		key := fmt.Sprintf("%v#&%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceCategory[i], set.ResourceSubcategory[i], set.Specification[i])
+	for i := 0; i < len(set.CloudPool); i++ {
+		key := fmt.Sprintf("%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceSubcategory[i], set.Specification[i])
 
 		// 如果 key 不存在于 map 中，则初始化它，并使用指针 //key是全部参数组成的key，value是int,map[string]int 类型
 		if _, exists := aggregatedResources[key]; !exists {
@@ -372,7 +366,7 @@ func SecurityTotalResource(set Set) [][]string {
 
 		//fmt.Println("Slice=", Slice)
 		//跳过资源小类等于NF或者NFI的空行
-		if Slice[4] == "NF" || Slice[4] == "NFI" {
+		if Slice[3] == "NF" || Slice[3] == "NFI" {
 			continue
 		}
 
@@ -392,8 +386,8 @@ func PAASTotalResource(set Set) [][]string {
 	// 创建一个 map 来存储聚合后的结果和规格统计
 	aggregatedResources := make(map[string]*aggregatedData)
 
-	for i := 0; i < len(set.ResourceCategory); i++ {
-		key := fmt.Sprintf("%v#&%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceCategory[i], set.ResourceSubcategory[i], set.Specification[i])
+	for i := 0; i < len(set.CloudPool); i++ {
+		key := fmt.Sprintf("%v#&%v#&%v#&%v#&%v", set.CloudPool[i], set.Node[i], set.AvailabilityZone[i], set.ResourceSubcategory[i], set.Specification[i])
 
 		// 如果 key 不存在于 map 中，则初始化它，并使用指针 //key是全部参数组成的key，value是int,map[string]int 类型
 		if _, exists := aggregatedResources[key]; !exists {
@@ -412,20 +406,20 @@ func PAASTotalResource(set Set) [][]string {
 	var countSlice [][]string
 	//k=key ,data=aggregatedData类型
 	for k, data := range aggregatedResources {
-		// 每次循环开始时重新初始化 Slice
-		Slice := strings.Split(k, "#&")
+		// 每次循环开始时重新初始化 slice
+		slice := strings.Split(k, "#&")
 
-		// 将总数量和规格数量字符串添加到 Slice，Slice是每个key拆分后的数据，totalCounts是统计相同资源的个数，specCounts是将规格和数量组合的数据
-		Slice = append(Slice, strconv.Itoa(data.totalCounts))
+		// 将总数量和规格数量字符串添加到 slice，Slice是每个key拆分后的数据，totalCounts是统计相同资源的个数，specCounts是将规格和数量组合的数据
+		slice = append(slice, strconv.Itoa(data.totalCounts))
 
-		//fmt.Println("Slice=", Slice)
+		//fmt.Println("slice=", slice)
 		//跳过资源小类等于NF或者NFI的空行
-		if Slice[4] == "NF" || Slice[4] == "NFI" {
+		if slice[3] == "NF" || slice[3] == "NFI" {
 			continue
 		}
 
-		// 将 Slice 添加到 countSlice
-		countSlice = append(countSlice, Slice)
+		// 将 slice 添加到 countSlice
+		countSlice = append(countSlice, slice)
 	}
 
 	// 打印结果以验证

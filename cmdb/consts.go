@@ -20,5 +20,6 @@ const (
 )
 
 const (
-	SheetResourceEntry = "资源录入"
+	SheetResourceEntry   = "资源录入"
+	SheetSecurityProduct = "安全产品"
 )
