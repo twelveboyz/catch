@@ -38,8 +38,19 @@ func Run() {
 		}
 	}()
 
-	//初始化统计表格
-	initCountExcelFile(countExcel, projectName)
+	// 尝试从PDF提取信息
+	var pdfInfo *PdfInfo
+	pdfInfo, err = ExtractFromPDF(temp)
+	if err != nil {
+		logrus.Warnf("PDF提取失败: %v，将使用手动输入方式", err)
+		pdfInfo = nil
+	} else {
+		logrus.Infof("PDF提取成功 - 申请人: %s, 需求方: %s, OA发文时间: %s, 主账号: %s",
+			pdfInfo.Applicant, pdfInfo.DemandSide, pdfInfo.OAPublishTime, pdfInfo.PrimaryAccount)
+	}
+
+	//初始化统计表格（传入pdfInfo，可以为nil）
+	initCountExcelFile(countExcel, projectName, pdfInfo)
 
 	/*-------------------------------------------资源录入模板-------------------------------------------------*/
 	fileName := internal.CMDBFilterFileName(root, "资源录入表", []string{"资源录入", "资源录入表"})

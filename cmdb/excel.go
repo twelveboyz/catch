@@ -436,7 +436,7 @@ func (e *Excel) GetColCall(colCallNumber int) []string {
 	//如果获取xlsx行数是空则捕获切片超出index的panic报错，原因是获取xlsx表格的行数内容是空的
 	defer func() {
 		if r := recover(); r != nil {
-			logrus.Fatalf("%v %v: GetColCallFunc函数执行报错 Recovered from panic:%v , 下标是=%v,可能是行尾无数据导致", e.Sheet, r, colCallNumber)
+			logrus.Fatalf("%v %v: GetColCallFunc函数执行报错 Recovered from panic:%v , 下标=%v,可能是行尾无数据导致", filepath.Base(e.Filename), e.Sheet, r, colCallNumber)
 		}
 	}()
 
@@ -533,7 +533,7 @@ func (e *Excel) LoopSheet() []string {
 	return slice
 }
 
-func initCountExcelFile(xlsxFileName string, projectName string) {
+func initCountExcelFile(xlsxFileName string, projectName string, pdfInfo *PdfInfo) {
 	messages := internal.InputMessages()
 
 	f := excelize.NewFile()
@@ -546,22 +546,51 @@ func initCountExcelFile(xlsxFileName string, projectName string) {
 
 	// 使用默认的工作表 Sheet1。
 	sheetName := "Sheet1"
-	err := f.SetSheetRow(sheetName, "A1", &[]interface{}{"需求人：", messages["DemandPerson"]})
-	err = f.SetSheetRow(sheetName, "A2", &[]interface{}{"需求方：", messages["Demander"]})
-	err = f.SetSheetRow(sheetName, "A3", &[]interface{}{"OA发文时间：", messages["OATime"]})
-	err = f.SetSheetRow(sheetName, "A4", &[]interface{}{"是否分批：", messages["InBatches"]})
-	err = f.SetSheetRow(sheetName, "A5", &[]interface{}{"主账号：", messages["PrimaryAccount"]})
-	err = f.SetSheetRow(sheetName, "A6", &[]interface{}{"项目名称：", projectName})
-	err = f.SetSheetRow(sheetName, "A7", &[]interface{}{"新增子网信息：", messages["SubnetInfo"]})
-	err = f.SetSheetRow(sheetName, "A8", &[]interface{}{"云池", "节点", "可用区", "资源大类", "资源小类", "规格", "单位", "资源统计", "卷/桶数量", "备注"})
 
-	if err != nil {
-		logrus.Println("填写失败", err)
+	// 填充标签到A列，值到B列
+	// A列：标签
+	f.SetSheetRow(sheetName, "A1", &[]interface{}{"需求人："})
+	f.SetSheetRow(sheetName, "A2", &[]interface{}{"需求方："})
+	f.SetSheetRow(sheetName, "A3", &[]interface{}{"OA发文时间："})
+	f.SetSheetRow(sheetName, "A4", &[]interface{}{"是否分批："})
+	f.SetSheetRow(sheetName, "A5", &[]interface{}{"主账号："})
+	f.SetSheetRow(sheetName, "A6", &[]interface{}{"项目名称："})
+	f.SetSheetRow(sheetName, "A7", &[]interface{}{"新增子网信息："})
+	f.SetSheetRow(sheetName, "A8", &[]interface{}{"云池", "节点", "可用区", "资源大类", "资源小类", "规格", "单位", "资源统计", "卷/桶数量", "备注"})
+
+	// B列：值 - 优先使用PDF提取的值，如果为空则使用手动输入的值
+	var demandPerson, demander, oaTime, primaryAccount string
+	if pdfInfo != nil {
+		demandPerson = pdfInfo.Applicant
+		demander = pdfInfo.DemandSide
+		oaTime = pdfInfo.OAPublishTime
+		primaryAccount = pdfInfo.PrimaryAccount
 	}
 
-	err = f.SaveAs(xlsxFileName)
-	if err != nil {
-		logrus.Println(err)
+	// 如果PDF提取的值为空，使用手动输入的值作为默认值
+	if demandPerson == "" {
+		demandPerson = messages["DemandPerson"]
+	}
+	if demander == "" {
+		demander = messages["Demander"]
+	}
+	if oaTime == "" {
+		oaTime = messages["OATime"]
+	}
+	if primaryAccount == "" {
+		primaryAccount = messages["PrimaryAccount"]
+	}
+
+	f.SetSheetRow(sheetName, "B1", &[]interface{}{demandPerson})
+	f.SetSheetRow(sheetName, "B2", &[]interface{}{demander})
+	f.SetSheetRow(sheetName, "B3", &[]interface{}{oaTime})
+	f.SetSheetRow(sheetName, "B4", &[]interface{}{messages["InBatches"]})
+	f.SetSheetRow(sheetName, "B5", &[]interface{}{primaryAccount})
+	f.SetSheetRow(sheetName, "B6", &[]interface{}{projectName})
+	f.SetSheetRow(sheetName, "B7", &[]interface{}{messages["SubnetInfo"]})
+
+	if err := f.SaveAs(xlsxFileName); err != nil {
+		logrus.Println("保存Excel失败", err)
 	}
 }
 
