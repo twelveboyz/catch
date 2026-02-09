@@ -137,20 +137,10 @@ func ExtractDemandSide(content string) string {
 	}
 
 	// 如果没有 X_ 前缀，直接提取业务名称
-	r = regexp.MustCompile(`所属独立业务[\dX]+：\s*(\S.+)`)
+	r = regexp.MustCompile(`所属独立业务[\dX]+：\s*(\S+)`)
 	matches = r.FindStringSubmatch(content)
 	if len(matches) >= 2 {
-		// 去除可能的换行符和多余空格
-		result := strings.TrimSpace(matches[1])
-		// 如果结果中有换行，只取第一行
-		if idx := strings.Index(result, "\n"); idx != -1 {
-			result = result[:idx]
-		}
-		// 去除可能的 订购帐号 等后续内容
-		if idx := strings.Index(result, "订购帐号"); idx != -1 {
-			result = result[:idx]
-		}
-		return strings.TrimSpace(result)
+		return strings.TrimSpace(matches[1])
 	}
 
 	return ""

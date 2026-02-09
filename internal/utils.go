@@ -164,196 +164,43 @@ func InputChoose() string {
 
 func InputMessages() map[string]string {
 	var InputMap = make(map[string]string)
-	for i := 1; i <= 6; i++ {
-		inputReader := bufio.NewReader(os.Stdin)
-		switch i {
-		case 1:
-			fmt.Print("是否分批（默认为\"不分配\"，如分批请输入\"第x批\"）：")
-			input, err := inputReader.ReadString('\n')
-			input = strings.TrimSpace(input)
-			if err != nil {
-				logrus.Println("获取输入内容失败：", err)
-			}
-			if input == "" {
-				InputMap["InBatches"] = "不分批"
-			} else {
-				InputMap["InBatches"] = input
-			}
-		case 2:
-			fmt.Print("需求人：")
-			input, err := inputReader.ReadString('\n')
-			input = strings.TrimSpace(input)
-			if err != nil {
-				logrus.Println("获取输入内容失败：", err)
-			}
-			InputMap["DemandPerson"] = input
+	inputReader := bufio.NewReader(os.Stdin)
 
-		case 3:
-			fmt.Print("需求方：")
-			input, err := inputReader.ReadString('\n')
-			input = strings.TrimSpace(input)
-			if err != nil {
-				logrus.Println("获取输入内容失败：", err)
-			}
-			InputMap["Demander"] = input
-
-		case 4:
-			fmt.Print("OA发文时间：")
-			input, err := inputReader.ReadString('\n')
-			input = strings.TrimSpace(input)
-			if err != nil {
-				logrus.Println("获取输入内容失败：", err)
-			}
-			InputMap["OATime"] = input
-
-		case 5:
-			fmt.Print("主账号：")
-			input, err := inputReader.ReadString('\n')
-			input = strings.TrimSpace(input)
-			if err != nil {
-				logrus.Println("获取输入内容失败：", err)
-			}
-			InputMap["PrimaryAccount"] = input
-		case 6:
-			fmt.Print("新增子网信息：")
-			input, err := inputReader.ReadString('\n')
-			input = strings.TrimSpace(input)
-			if err != nil {
-				logrus.Println("获取输入内容失败：", err)
-			}
-			InputMap["SubnetInfo"] = input
-		}
+	fmt.Print("是否分批（默认为\"不分配\"，如分批请输入\"第x批\"）：")
+	input, err := inputReader.ReadString('\n')
+	input = strings.TrimSpace(input)
+	if err != nil {
+		logrus.Println("获取输入内容失败：", err)
 	}
+	if input == "" {
+		InputMap["InBatches"] = "不分批"
+	} else {
+		InputMap["InBatches"] = input
+	}
+
 	return InputMap
 }
 
 func InputMessagesWithDefaults(defaults map[string]string) map[string]string {
 	var InputMap = make(map[string]string)
-	for i := 1; i <= 6; i++ {
-		inputReader := bufio.NewReader(os.Stdin)
-		switch i {
-		case 1:
-			defaultValue := "不分批"
-			if val, ok := defaults["InBatches"]; ok {
-				defaultValue = val
-			}
-			fmt.Printf("是否分批（默认为\"%s\"，如分批请输入\"第x批\"）：", defaultValue)
-			input, err := inputReader.ReadString('\n')
-			input = strings.TrimSpace(input)
-			if err != nil {
-				logrus.Println("获取输入内容失败：", err)
-			}
-			if input == "" {
-				InputMap["InBatches"] = defaultValue
-			} else {
-				InputMap["InBatches"] = input
-			}
-		case 2:
-			defaultValue := ""
-			if val, ok := defaults["DemandPerson"]; ok {
-				defaultValue = val
-			}
-			if defaultValue != "" {
-				fmt.Printf("需求人（默认：%s）：", defaultValue)
-			} else {
-				fmt.Print("需求人：")
-			}
-			input, err := inputReader.ReadString('\n')
-			input = strings.TrimSpace(input)
-			if err != nil {
-				logrus.Println("获取输入内容失败：", err)
-			}
-			if input == "" && defaultValue != "" {
-				InputMap["DemandPerson"] = defaultValue
-			} else {
-				InputMap["DemandPerson"] = input
-			}
+	inputReader := bufio.NewReader(os.Stdin)
 
-		case 3:
-			defaultValue := ""
-			if val, ok := defaults["Demander"]; ok {
-				defaultValue = val
-			}
-			if defaultValue != "" {
-				fmt.Printf("需求方（默认：%s）：", defaultValue)
-			} else {
-				fmt.Print("需求方：")
-			}
-			input, err := inputReader.ReadString('\n')
-			input = strings.TrimSpace(input)
-			if err != nil {
-				logrus.Println("获取输入内容失败：", err)
-			}
-			if input == "" && defaultValue != "" {
-				InputMap["Demander"] = defaultValue
-			} else {
-				InputMap["Demander"] = input
-			}
-
-		case 4:
-			defaultValue := ""
-			if val, ok := defaults["OATime"]; ok {
-				defaultValue = val
-			}
-			if defaultValue != "" {
-				fmt.Printf("OA发文时间（默认：%s）：", defaultValue)
-			} else {
-				fmt.Print("OA发文时间：")
-			}
-			input, err := inputReader.ReadString('\n')
-			input = strings.TrimSpace(input)
-			if err != nil {
-				logrus.Println("获取输入内容失败：", err)
-			}
-			if input == "" && defaultValue != "" {
-				InputMap["OATime"] = defaultValue
-			} else {
-				InputMap["OATime"] = input
-			}
-
-		case 5:
-			defaultValue := ""
-			if val, ok := defaults["PrimaryAccount"]; ok {
-				defaultValue = val
-			}
-			if defaultValue != "" {
-				fmt.Printf("主账号（默认：%s）：", defaultValue)
-			} else {
-				fmt.Print("主账号：")
-			}
-			input, err := inputReader.ReadString('\n')
-			input = strings.TrimSpace(input)
-			if err != nil {
-				logrus.Println("获取输入内容失败：", err)
-			}
-			if input == "" && defaultValue != "" {
-				InputMap["PrimaryAccount"] = defaultValue
-			} else {
-				InputMap["PrimaryAccount"] = input
-			}
-
-		case 6:
-			defaultValue := ""
-			if val, ok := defaults["SubnetInfo"]; ok {
-				defaultValue = val
-			}
-			if defaultValue != "" {
-				fmt.Printf("新增子网信息（默认：%s）：", defaultValue)
-			} else {
-				fmt.Print("新增子网信息：")
-			}
-			input, err := inputReader.ReadString('\n')
-			input = strings.TrimSpace(input)
-			if err != nil {
-				logrus.Println("获取输入内容失败：", err)
-			}
-			if input == "" && defaultValue != "" {
-				InputMap["SubnetInfo"] = defaultValue
-			} else {
-				InputMap["SubnetInfo"] = input
-			}
-		}
+	defaultValue := "不分批"
+	if val, ok := defaults["InBatches"]; ok {
+		defaultValue = val
 	}
+	fmt.Printf("是否分批（默认为\"%s\"，如分批请输入\"第x批\"）：", defaultValue)
+	input, err := inputReader.ReadString('\n')
+	input = strings.TrimSpace(input)
+	if err != nil {
+		logrus.Println("获取输入内容失败：", err)
+	}
+	if input == "" {
+		InputMap["InBatches"] = defaultValue
+	} else {
+		InputMap["InBatches"] = input
+	}
+
 	return InputMap
 }
 
