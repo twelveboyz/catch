@@ -57,6 +57,11 @@ func TotalResource(set Set) [][]string {
 		specification := set.Specification[i]
 		comment := set.Comments[i]
 
+		//其他资源的小类取自备注，备注缺失时统一成空串，避免把NF/NFI写入key
+		if resourceCategory == "其他资源" && isMissingValue(comment) {
+			comment = ""
+		}
+
 		// 1. 组合 key
 		key := CombinationKey(node, resourceCategory, cloudPoolAndResourceSubcategory, specification, comment)
 
@@ -98,12 +103,19 @@ func CombinationKey(node, resourceCategory, cloudPoolAndResourceSubcategory, spe
 		key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, comment)
 	case "云安全":
 		key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, "")
+	case "其他资源":
+		key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, comment)
 	default:
 		key = fmt.Sprintf("%v#&%v#&%v#&%v#&%v", node, resourceCategory, cloudPoolAndResourceSubcategory, specification, "")
 	}
 
 	return key
 
+}
+
+// isMissingValue 判断列值是否为空或占位符，GetColCall在列缺失、行长度不足时会填充NF/NFI
+func isMissingValue(s string) bool {
+	return s == "" || s == "NF" || s == "NFI"
 }
 
 // classifiedStatistics 根据资源大类进行不同的统计处理
@@ -260,6 +272,10 @@ func slicesToStruct(slices [][]string) []ResourceCountInfo {
 			resourceSubcategory = cloudPoolAndResourceSubcategory
 		} else {
 			cloudPool, resourceSubcategory = SplitCloudPortAndResourceSubcategory(cloudPoolAndResourceSubcategory)
+			//其他资源用小类作为备注的承载，备注有内容时用备注覆盖资源小类
+			if resourceCategory == "其他资源" && slice[4] != "" {
+				resourceSubcategory = slice[4]
+			}
 		}
 
 		specification := slice[3]

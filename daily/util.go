@@ -1,6 +1,7 @@
 package daily
 
 import (
+	"Catch/internal"
 	"fmt"
 	"os"
 	"os/exec"
@@ -86,7 +87,7 @@ func MostSimilarFileName(dirEntry []os.DirEntry) (string, error) {
 }
 
 func cmdExec(sourcePath, destination string) error {
-	cmd := exec.Command("tools/pdftotext.exe", "-nopgbrk", "-raw", sourcePath, destination)
+	cmd := exec.Command(internal.ToolPath("pdftotext.exe"), "-nopgbrk", "-raw", sourcePath, destination)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("pdftotext failed: %w", err)
 	}

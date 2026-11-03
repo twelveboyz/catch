@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Run() {
+func Run() error {
 	//手动输入相应的目录路径
 	root, projectName := internal.UserInputRoot()
 
@@ -27,7 +27,7 @@ func Run() {
 	err := internal.CreateTempDirAndCopy(root, temp)
 	if err != nil {
 		logrus.Error(err)
-		return
+		return err
 	}
 
 	defer func() {
@@ -84,4 +84,5 @@ func Run() {
 	SetCollStyle(countExcel)
 	/*----------------------------------------------end---------------------------------------------------*/
 
+	return nil
 }

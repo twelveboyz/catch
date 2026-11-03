@@ -2,3 +2,12 @@ log
 .cache
 # Added by code-review-graph
 .code-review-graph/
+
+# 本地 IDE 配置（含上传服务器地址与账号）
+.idea/
+
+# 临时调试脚本
+.debug/
+
+# 测试证据（含真实姓名与账号）
+evidence/

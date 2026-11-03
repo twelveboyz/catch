@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func Run() {
+func Run() error {
 	//手动输入相应的目录路径
 	//root := internal.InputRoot()
 	root, projectName := internal.UserInputRoot()
@@ -23,7 +23,7 @@ func Run() {
 	err := internal.CreateTempDirAndCopy(root, temp)
 	if err != nil {
 		logrus.Error(err)
-		return
+		return err
 	}
 
 	defer func() {
@@ -38,7 +38,7 @@ func Run() {
 	err = CreateXlsx(fileName)
 	if err != nil {
 		logrus.Error(err)
-		return
+		return err
 	}
 
 	//日志
@@ -62,4 +62,6 @@ func Run() {
 	logrus.Printf("已在项目目录下生成\"%v\"\n", fileName)
 	logrus.Println("------ end ------\n")
 	time.Sleep(100 * time.Millisecond)
+
+	return nil
 }

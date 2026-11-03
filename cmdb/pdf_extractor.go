@@ -1,6 +1,7 @@
 package cmdb
 
 import (
+	"Catch/internal"
 	"fmt"
 	"os"
 	"os/exec"
@@ -96,7 +97,7 @@ func convertPdfToText(pdfPath string) (string, error) {
 	txtPath := strings.ReplaceAll(pdfPath, ".pdf", ".txt")
 
 	// 执行 pdftotext 命令
-	cmd := exec.Command("tools/pdftotext.exe", "-nopgbrk", "-raw", pdfPath, txtPath)
+	cmd := exec.Command(internal.ToolPath("pdftotext.exe"), "-nopgbrk", "-raw", pdfPath, txtPath)
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("pdftotext failed: %w", err)
 	}

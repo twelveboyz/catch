@@ -25,22 +25,26 @@ type resource struct {
 	ResourceProperties  string //资源属性
 }
 
-func Run() {
+func Run() error {
 	projectBatchFiles, err := loopFindProjectBatchResources()
 	if err != nil {
-		logrus.Fatalf("LoopFindProjectBatchResources:%v", err)
+		logrus.Errorf("LoopFindProjectBatchResources:%v", err)
+		return err
 	}
 
 	resourceCount, err := ReadExcelFile(projectBatchFiles)
 	if err != nil {
-		logrus.Fatalf("ReadExcelFile:%v", err)
+		logrus.Errorf("ReadExcelFile:%v", err)
+		return err
 	}
 
 	err = WriteExcelFile(resourceCount)
 	if err != nil {
-		logrus.Fatalf("WriteExcelFile:%v", err)
+		logrus.Errorf("WriteExcelFile:%v", err)
+		return err
 	}
 
+	return nil
 }
 
 // WriteExcelFile 将resource结构体切片写入Excel文件
@@ -48,7 +52,7 @@ func WriteExcelFile(resources []resource) error {
 	excel := internal.CreateExcel()
 	defer func() {
 		if err := excel.Close(); err != nil {
-			logrus.Fatalf("关闭文件失败:%v", err)
+			logrus.Errorf("关闭文件失败:%v", err)
 		}
 	}()
 

@@ -104,6 +104,11 @@ func RegexFunc(regex string, Str string) string {
 }
 
 func InputRoot() string {
+	//命令行模式下直接使用传入的目录，不再读取 stdin（合法性由入口统一校验）
+	if o := FromCLI(); o != nil {
+		return o.Root
+	}
+
 	for {
 		inputReader := bufio.NewReader(os.Stdin)
 		fmt.Print("目录路径：")
@@ -164,6 +169,12 @@ func InputChoose() string {
 
 func InputMessages() map[string]string {
 	var InputMap = make(map[string]string)
+	//命令行模式下直接从参数取值
+	if o := FromCLIWithDefaults(); o != nil {
+		InputMap["InBatches"] = o.InBatches
+		return InputMap
+	}
+
 	inputReader := bufio.NewReader(os.Stdin)
 
 	fmt.Print("是否分批（默认为\"不分配\"，如分批请输入\"第x批\"）：")
@@ -183,6 +194,12 @@ func InputMessages() map[string]string {
 
 func InputMessagesWithDefaults(defaults map[string]string) map[string]string {
 	var InputMap = make(map[string]string)
+	//命令行模式下直接从参数取值
+	if o := FromCLIWithDefaults(); o != nil {
+		InputMap["InBatches"] = o.InBatches
+		return InputMap
+	}
+
 	inputReader := bufio.NewReader(os.Stdin)
 
 	defaultValue := "不分批"

@@ -5,7 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Run() {
+func Run() error {
 	//手动输入相应的目录路径
 	root := internal.InputRoot()
 
@@ -17,7 +17,7 @@ func Run() {
 	err := internal.CreateTempDirAndCopy(root, temp)
 	if err != nil {
 		logrus.Error(err)
-		return
+		return err
 	}
 
 	defer func() {
@@ -53,7 +53,7 @@ func Run() {
 		comPutExcel, err := NewExcel(comPutFileName, 3, "计算资源")
 		if err != nil {
 			logrus.Error(err)
-			return
+			return err
 		}
 
 		//获取表格所有的sheet
@@ -73,7 +73,7 @@ func Run() {
 		systemDiskexcel, err := NewExcel(systemDiskFileName, 3, "系统盘资源")
 		if err != nil {
 			logrus.Error(err)
-			return
+			return err
 		}
 
 		//获取表格所有的sheet
@@ -93,7 +93,7 @@ func Run() {
 		storageExcel, err := NewExcel(storageFileName, 3, "存储资源")
 		if err != nil {
 			logrus.Error(err)
-			return
+			return err
 		}
 
 		//获取表格所有的sheet
@@ -112,7 +112,7 @@ func Run() {
 		networkExcel, err := NewExcel(networkFileName, 3, "网络资源")
 		if err != nil {
 			logrus.Error(err)
-			return
+			return err
 		}
 
 		//获取表格所有的sheet
@@ -134,7 +134,7 @@ func Run() {
 		securityExcel, err := NewExcel(securityFileName, 3, "安全资源")
 		if err != nil {
 			logrus.Error(err)
-			return
+			return err
 		}
 
 		//获取表格所有的sheet
@@ -155,7 +155,7 @@ func Run() {
 		PaasExcel, err := NewExcel(paasFileName, 3, "PAAS资源")
 		if err != nil {
 			logrus.Error(err)
-			return
+			return err
 		}
 
 		//获取表格所有的sheet
@@ -182,4 +182,6 @@ func Run() {
 
 	/*----------------------------------------------end---------------------------------------------------*/
 	logrus.Printf("已在项目目录下生成\"%v\"\n", countExcelFileName)
+
+	return nil
 }

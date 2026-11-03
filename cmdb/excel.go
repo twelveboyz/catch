@@ -285,7 +285,7 @@ func (e *Excel) writeOther(num *int, rci ResourceCountInfo) {
 	_ = rci.resourceSubcategory
 	nodeName := strings.ReplaceAll(rci.NodeName, "_", "-")
 
-	if resourceCategory == "其他" {
+	if resourceCategory == "其他资源" {
 		*num++
 		cell := fmt.Sprintf("A%d", *num)
 
