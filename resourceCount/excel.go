@@ -113,7 +113,7 @@ func ReadExcelFile(files []string) ([]resource, error) {
 
 // readExcelRowConvertResource 读取Excel文件的行内容并转换为resource结构体
 func readExcelRowConvertResource(file string) ([]resource, error) {
-	excel, err := internal.NewExcel(file, "Sheet1", 0, 0)
+	excel, err := internal.NewExcel(file, "", 0, 0)
 	if err != nil {
 
 		return nil, fmt.Errorf("打开文件失败:%w", err)

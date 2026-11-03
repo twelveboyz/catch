@@ -172,8 +172,8 @@ func Run() {
 	/*--------------------------------------------设置单格式------------------------------------------------*/
 	//自动设置列宽
 
-	// 10 是列的长度，10 = J
-	for i := 0; i < 10; i++ {
+	// 10 是列的长度，10 = K
+	for i := 0; i < 11; i++ {
 		var runeLetter = 'A' + int32(i)                      //每次循环A+1 = B +1  = C
 		AutoWidth(countExcelFileName, string(runeLetter), i) //colStr = A 那colInt 必须等于0
 	}

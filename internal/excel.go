@@ -27,6 +27,10 @@ func NewExcel(filename string, sheet string, titleLine, copyLine int) (*Excel, e
 		return nil, err
 	}
 
+	if sheet == "" {
+		sheet = file.GetSheetName(0)
+	}
+
 	return &Excel{
 		Filename:  filename,
 		File:      file,

@@ -30,12 +30,16 @@ func loopFindProjectBatchResources() ([]string, error) {
 		found = append(found, towFound...)
 	}
 
-	logrus.Errorf("not found xlsx files total:%v directories:\n%v", len(towNotFoundDirs), strings.Join(towNotFoundDirs, "\n"))
+	if len(towNotFoundDirs) != 0 {
+		logrus.Errorf("not found xlsx files total:%v directories:\n%v", len(towNotFoundDirs), strings.Join(towNotFoundDirs, "\n"))
+	}
+
+	logrus.Infoln("Total xlsx files found:", len(found))
 
 	return found, nil
 }
 
-// findDirProjectFiles 查找指定目录下的项目批次目录及其xlsx文件
+// findDirProjectFiles 查找指定目录下的项目批次目录及其xlsx文件, 返回找到的xlsx文件路径和未找到xlsx文件的目录路径
 func findDirProjectFiles(root string) ([]string, []string, error) {
 	//获取所有的项目批次目录
 	projectBatchDirs, err := fetchProjectBatchDirs(root)

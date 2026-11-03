@@ -18,7 +18,7 @@ type Excel struct {
 }
 
 func NewExcel(filename string, titleLine int, resourceType string) (*Excel, error) {
-	f, err := excelize.OpenFile(filename)
+	f, err := OpenFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("NewExcel:打开文件失败:%w", err)
 	}
@@ -31,42 +31,48 @@ func NewExcel(filename string, titleLine int, resourceType string) (*Excel, erro
 	}, nil
 }
 
-func (e *Excel) OpenFile() *excelize.File {
-	f, err := excelize.OpenFile(e.Filename)
+func OpenFile(filename string) (*excelize.File, error) {
+	f, err := excelize.OpenFile(filename)
 	if err != nil {
-		logrus.Fatal("打开文件失败:", err)
+		return nil, fmt.Errorf("OpenFile:打开文件失败:%w", err)
 	}
 
-	return f
+	return f, nil
 }
 
 func (e *Excel) ComPutExec(countExcelFileName string) {
 	//根据第一行标题匹配string，匹配成功后返回标题所在的列对于的切片下标，使用这个下标来获取该标题一列的数据
-	comPutResourceSubcategoryInt := e.CaptureColNumber(ResourceSubcategory, true)
-	comPutSpecificationInt := e.CaptureColNumber(Specification, true)
-	comPutCloudPoolInt := e.CaptureColNumber(CloudPool, true)
-	comPutNodeInt := e.CaptureColNumber(Node, true)
-	comPutAZInt := e.CaptureColNumber(AvailabilityZone, true)
-	comPutSystemDiskSpecificationInt := e.CaptureColNumber(SystemDiskSpecification, true)
-	comPutSystemDiskCapacityInt := e.CaptureColNumber(SystemDiskCapacity, true)
+	resourceSubcategoryInt := e.CaptureColNumber(ResourceSubcategory, true)
+	specificationInt := e.CaptureColNumber(Specification, true)
+	cloudPoolInt := e.CaptureColNumber(CloudPool, true)
+	nodeInt := e.CaptureColNumber(Node, true)
+	azInt := e.CaptureColNumber(AvailabilityZone, true)
+	systemDiskSpecificationInt := e.CaptureColNumber(SystemDiskSpecification, true)
+	systemDiskCapacityInt := e.CaptureColNumber(SystemDiskCapacity, true)
+	resourceApplicationBatchInt := e.CaptureColNumber(ResourceApplicationBatch, true)
+	imageInt := e.CaptureColNumber(Image, true)
 
 	//根据下标抓取一列的数据，例如: 下标=-1就是A列、下标=18，则是对于Xlsx表中“S”列的数据
-	comPutResourceSubcategoryData := e.GetColCall(comPutResourceSubcategoryInt)
-	comPutSpecificationData := e.GetColCall(comPutSpecificationInt)
-	comPutCloudPoolData := e.GetColCall(comPutCloudPoolInt)
-	comPutNodeData := e.GetColCall(comPutNodeInt)
-	comPutAZData := e.GetColCall(comPutAZInt)
-	comPutSystemDiskSpecificationData := e.GetColCall(comPutSystemDiskSpecificationInt)
-	comPutSystemDiskCapacityData := e.GetColCall(comPutSystemDiskCapacityInt)
+	resourceSubcategoryData := e.GetColCall(resourceSubcategoryInt)
+	specificationData := e.GetColCall(specificationInt)
+	cloudPoolData := e.GetColCall(cloudPoolInt)
+	nodeData := e.GetColCall(nodeInt)
+	azData := e.GetColCall(azInt)
+	systemDiskSpecificationData := e.GetColCall(systemDiskSpecificationInt)
+	systemDiskCapacityData := e.GetColCall(systemDiskCapacityInt)
+	resourceApplicationBatchData := e.GetColCall(resourceApplicationBatchInt)
+	imageData := e.GetColCall(imageInt)
 
 	comPutSet := Set{
-		ResourceSubcategory:     comPutResourceSubcategoryData,
-		Specification:           comPutSpecificationData,
-		CloudPool:               comPutCloudPoolData,
-		Node:                    comPutNodeData,
-		AvailabilityZone:        comPutAZData,
-		SystemDiskSpecification: comPutSystemDiskSpecificationData,
-		SystemDiskCapacity:      comPutSystemDiskCapacityData,
+		ResourceSubcategory:      resourceSubcategoryData,
+		Specification:            specificationData,
+		CloudPool:                cloudPoolData,
+		Node:                     nodeData,
+		AvailabilityZone:         azData,
+		SystemDiskSpecification:  systemDiskSpecificationData,
+		SystemDiskCapacity:       systemDiskCapacityData,
+		ResourceApplicationBatch: resourceApplicationBatchData,
+		Images:                   imageData,
 	}
 
 	//合并统计两列数据共出现的次数，并且返回一个[][]string类型的统计数据
@@ -97,6 +103,7 @@ func (e *Excel) StorageExec(countExcelFileName string) {
 	storageAZInt := e.CaptureColNumber(AvailabilityZone, true)
 	storageCapacityInt := e.CaptureColNumber(Capacity, true)
 	storageCommentsInt := e.CaptureColNumber(Comments, true)
+	storageResourceApplicationBatchInt := e.CaptureColNumber(ResourceApplicationBatch, true)
 
 	//根据下标抓取一列的数据，例如: 下标=0就是A列、下标=18，则是对于Xlsx表中“S”列的数据
 	storageResourceSubcategoryData := e.GetColCall(storageResourceSubcategoryInt)
@@ -106,15 +113,17 @@ func (e *Excel) StorageExec(countExcelFileName string) {
 	storageAZData := e.GetColCall(storageAZInt)
 	storageCapacityData := e.GetColCall(storageCapacityInt)
 	storageCommentsData := e.GetColCall(storageCommentsInt)
+	storageResourceApplicationBatchData := e.GetColCall(storageResourceApplicationBatchInt)
 
 	storageSet := Set{
-		ResourceSubcategory: storageResourceSubcategoryData,
-		Specification:       storageSpecificationData,
-		CloudPool:           storageCloudPoolData,
-		Node:                storageNodeData,
-		AvailabilityZone:    storageAZData,
-		Capacity:            storageCapacityData,
-		Comments:            storageCommentsData,
+		ResourceSubcategory:      storageResourceSubcategoryData,
+		Specification:            storageSpecificationData,
+		CloudPool:                storageCloudPoolData,
+		Node:                     storageNodeData,
+		AvailabilityZone:         storageAZData,
+		Capacity:                 storageCapacityData,
+		Comments:                 storageCommentsData,
+		ResourceApplicationBatch: storageResourceApplicationBatchData,
 	}
 
 	//合并统计N列数据共出现的次数，并且返回一个[][]string类型的统计数据
@@ -139,6 +148,7 @@ func (e *Excel) SystemDiskExec(countExcelFileName string) {
 	SystemDiskAZInt := e.CaptureColNumber(AvailabilityZone, true)
 	SystemDiskSystemDiskSpecificationInt := e.CaptureColNumber(SystemDiskSpecification, true)
 	SystemDiskSystemDiskCapacityInt := e.CaptureColNumber(SystemDiskCapacity, true)
+	systemDiskResourceApplicationBatchInt := e.CaptureColNumber(ResourceApplicationBatch, true)
 
 	//根据下标抓取一列的数据，例如: 下标=0就是A列、下标=18，则是对于Xlsx表中“S”列的数据
 	SystemDiskResourceSubcategoryData := e.GetColCall(SystemDiskResourceSubcategoryInt)
@@ -148,15 +158,17 @@ func (e *Excel) SystemDiskExec(countExcelFileName string) {
 	SystemDiskAZData := e.GetColCall(SystemDiskAZInt)
 	SystemDiskSystemDiskSpecificationData := e.GetColCall(SystemDiskSystemDiskSpecificationInt)
 	SystemDiskSystemDiskCapacityData := e.GetColCall(SystemDiskSystemDiskCapacityInt)
+	systemDiskResourceApplicationBatchData := e.GetColCall(systemDiskResourceApplicationBatchInt)
 
 	SystemDiskSet := Set{
-		ResourceSubcategory:     SystemDiskResourceSubcategoryData,
-		Specification:           SystemDiskSpecificationData,
-		CloudPool:               SystemDiskCloudPoolData,
-		Node:                    SystemDiskNodeData,
-		AvailabilityZone:        SystemDiskAZData,
-		SystemDiskSpecification: SystemDiskSystemDiskSpecificationData,
-		SystemDiskCapacity:      SystemDiskSystemDiskCapacityData,
+		ResourceSubcategory:      SystemDiskResourceSubcategoryData,
+		Specification:            SystemDiskSpecificationData,
+		CloudPool:                SystemDiskCloudPoolData,
+		Node:                     SystemDiskNodeData,
+		AvailabilityZone:         SystemDiskAZData,
+		SystemDiskSpecification:  SystemDiskSystemDiskSpecificationData,
+		SystemDiskCapacity:       SystemDiskSystemDiskCapacityData,
+		ResourceApplicationBatch: systemDiskResourceApplicationBatchData,
 	}
 
 	//合并统计两列数据共出现的次数，并且返回一个[][]string类型的统计数据
@@ -187,6 +199,7 @@ func (e *Excel) NetworkExec(countExcelFileName string) {
 	nodeInt := e.CaptureColNumber(Node, true)
 	azInt := e.CaptureColNumber(AvailabilityZone, true)
 	bandwidthInt := e.CaptureColNumber(Bandwidth, true)
+	networkResourceApplicationBatchInt := e.CaptureColNumber(ResourceApplicationBatch, true)
 
 	//根据下标抓取一列的数据，例如: 下标=0就是A列、下标=18，则是对于Xlsx表中“S”列的数据
 	resourceTypeData := e.GetColCall(resourceTypeInt)
@@ -196,30 +209,33 @@ func (e *Excel) NetworkExec(countExcelFileName string) {
 	nodeData := e.GetColCall(nodeInt)
 	azData := e.GetColCall(azInt)
 	bandwidthData := e.GetColCall(bandwidthInt)
+	networkResourceApplicationBatchData := e.GetColCall(networkResourceApplicationBatchInt)
 
 	var set Set
 	if len(resourceTypeData) > 0 {
 		if resourceTypeData[0] != "NF" {
 			//fmt.Println("resourceTypeData-in")
 			set = Set{
-				ResourceSubcategory: resourceTypeData,
-				Specification:       specificationData,
-				CloudPool:           cloudPoolData,
-				Node:                nodeData,
-				AvailabilityZone:    azData,
-				Bandwidth:           bandwidthData,
+				ResourceSubcategory:      resourceTypeData,
+				Specification:            specificationData,
+				CloudPool:                cloudPoolData,
+				Node:                     nodeData,
+				AvailabilityZone:         azData,
+				Bandwidth:                bandwidthData,
+				ResourceApplicationBatch: networkResourceApplicationBatchData,
 			}
 		}
 	} else if len(resourceSubcategoryData) > 0 {
 		if resourceSubcategoryData[0] != "NF" {
 			//fmt.Println("resourceSubcategoryData-in")
 			set = Set{
-				ResourceSubcategory: resourceSubcategoryData,
-				Specification:       specificationData,
-				CloudPool:           cloudPoolData,
-				Node:                nodeData,
-				AvailabilityZone:    azData,
-				Bandwidth:           bandwidthData,
+				ResourceSubcategory:      resourceSubcategoryData,
+				Specification:            specificationData,
+				CloudPool:                cloudPoolData,
+				Node:                     nodeData,
+				AvailabilityZone:         azData,
+				Bandwidth:                bandwidthData,
+				ResourceApplicationBatch: networkResourceApplicationBatchData,
 			}
 		}
 	}
@@ -245,6 +261,7 @@ func (e *Excel) SecurityExec(countExcelFileName string) {
 	securityNodeInt := e.CaptureColNumber(Node, true)
 	securityAZInt := e.CaptureColNumber(AvailabilityZone, true)
 	securityNumberInt := e.CaptureColNumber(Number, true)
+	securityResourceApplicationBatchInt := e.CaptureColNumber(ResourceApplicationBatch, true)
 
 	//根据下标抓取一列的数据，例如: 下标=0就是A列、下标=18，则是对于Xlsx表中“S”列的数据
 	securityResourceSubcategoryData := e.GetColCall(securityResourceSubcategoryInt)
@@ -253,14 +270,16 @@ func (e *Excel) SecurityExec(countExcelFileName string) {
 	securityNodeData := e.GetColCall(securityNodeInt)
 	securityAZData := e.GetColCall(securityAZInt)
 	securityNumberData := e.GetColCall(securityNumberInt)
+	securityResourceApplicationBatchData := e.GetColCall(securityResourceApplicationBatchInt)
 
 	securitySet := Set{
-		ResourceSubcategory: securityResourceSubcategoryData,
-		Specification:       securitySpecificationData,
-		CloudPool:           securityCloudPoolData,
-		Node:                securityNodeData,
-		AvailabilityZone:    securityAZData,
-		Number:              securityNumberData,
+		ResourceSubcategory:      securityResourceSubcategoryData,
+		Specification:            securitySpecificationData,
+		CloudPool:                securityCloudPoolData,
+		Node:                     securityNodeData,
+		AvailabilityZone:         securityAZData,
+		Number:                   securityNumberData,
+		ResourceApplicationBatch: securityResourceApplicationBatchData,
 	}
 
 	securityCountSlice := SecurityTotalResource(securitySet)
@@ -287,6 +306,7 @@ func (e *Excel) PAASExec(countExcelFileName string) {
 	paasCloudPoolInt := e.CaptureColNumber(CloudPool, true)
 	paasNodeInt := e.CaptureColNumber(Node, true)
 	paasAZInt := e.CaptureColNumber(AvailabilityZone, true)
+	paasResourceApplicationBatchInt := e.CaptureColNumber(ResourceApplicationBatch, true)
 
 	//根据下标抓取一列的数据，例如: 下标=0就是A列、下标=18，则是对于Xlsx表中“S”列的数据
 	//PAASResourceCategoryData := e.GetColCall(PAASResourceCategoryInt)
@@ -295,14 +315,16 @@ func (e *Excel) PAASExec(countExcelFileName string) {
 	paasCloudPoolData := e.GetColCall(paasCloudPoolInt)
 	paasNodeData := e.GetColCall(paasNodeInt)
 	paasAZData := e.GetColCall(paasAZInt)
+	paasResourceApplicationBatchData := e.GetColCall(paasResourceApplicationBatchInt)
 
 	PAASSet := Set{
 		//ResourceCategory:    PAASResourceCategoryData,
-		ResourceSubcategory: paasResourceSubcategoryData,
-		Specification:       paasSpecificationData,
-		CloudPool:           paasCloudPoolData,
-		Node:                paasNodeData,
-		AvailabilityZone:    paasAZData,
+		ResourceSubcategory:      paasResourceSubcategoryData,
+		Specification:            paasSpecificationData,
+		CloudPool:                paasCloudPoolData,
+		Node:                     paasNodeData,
+		AvailabilityZone:         paasAZData,
+		ResourceApplicationBatch: paasResourceApplicationBatchData,
 	}
 
 	//合并统计两列数据共出现的次数，并且返回一个[][]string类型的统计数据
@@ -448,7 +470,7 @@ func Insert(xlsxFileName string) {
 
 	// 使用默认的工作表 Sheet1。
 	sheetName := "Sheet1"
-	err = f.SetSheetRow(sheetName, "A1", &[]interface{}{"云池", "节点", "可用区", "资源大类", "资源小类", "规格", "单位", "资源统计", "卷/桶数量", "备注"})
+	err = f.SetSheetRow(sheetName, "A1", &[]interface{}{"云池", "节点", "可用区", "资源大类", "资源小类", "规格", "单位", "资源统计", "卷/桶数量", "备注", "资源报建批次"})
 
 	if err != nil {
 		logrus.Println("填写失败", err)

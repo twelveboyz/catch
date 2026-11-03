@@ -21,12 +21,17 @@ type Excel struct {
 
 func NewExcel(fileName, sheet string, titleLine int) *Excel {
 	//打开一个excel文件
+	f := OpenFile(fileName)
+	if sheet == "" {
+		sheet = f.GetSheetName(0)
+	}
+
 	return &Excel{
 		Filename:  fileName,
 		Sheet:     sheet,
 		CopyLine:  titleLine + 1,
 		TitleLine: titleLine,
-		File:      OpenFile(fileName),
+		File:      f,
 	}
 }
 

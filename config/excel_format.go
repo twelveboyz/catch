@@ -28,44 +28,44 @@ func (e *Excel) WriteDataToExcel(fileName string, n int, sliceMap []map[string]s
 		cell := fmt.Sprintf("A%v", i+n+1)
 		switch e.ResourceType {
 		case "计算资源":
-			err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], sliceMap[i]["AvailabilityZone"], "云计算", sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "个", sliceMap[i]["Counts"]})
+			err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i][CloudPool], sliceMap[i][Node], sliceMap[i][AvailabilityZone], "云计算", sliceMap[i][ResourceSubcategory], sliceMap[i][Specification], "个", sliceMap[i][Counts], "", sliceMap[i][Image], sliceMap[i][ResourceApplicationBatch]})
 
 		case "系统盘资源":
-			err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], sliceMap[i]["AvailabilityZone"], "云存储", "云硬盘", sliceMap[i]["SystemDiskSpecification"], "GB", sliceMap[i]["SystemDiskCapacity"], sliceMap[i]["Counts"], "系统盘"})
+			err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i][CloudPool], sliceMap[i][Node], sliceMap[i][AvailabilityZone], "云存储", "云硬盘", sliceMap[i][SystemDiskSpecification], "GB", sliceMap[i][SystemDiskCapacity], sliceMap[i][Counts], "系统盘", sliceMap[i][ResourceApplicationBatch]})
 
 		case "存储资源":
-			if sliceMap[i]["ResourceSubcategory"] == "文件存储" {
-				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], sliceMap[i]["AvailabilityZone"], "云存储", sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "GB", sliceMap[i]["Capacity"], sliceMap[i]["Counts"]})
+			if sliceMap[i][ResourceSubcategory] == "文件存储" {
+				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i][CloudPool], sliceMap[i][Node], sliceMap[i][AvailabilityZone], "云存储", sliceMap[i][ResourceSubcategory], sliceMap[i][Specification], "GB", sliceMap[i][Capacity], sliceMap[i][Counts], "", sliceMap[i][ResourceApplicationBatch]})
 
-			} else if sliceMap[i]["ResourceSubcategory"] == "对象存储" {
-				/*s := fmt.Sprintf("%v ,共享容量%vG", sliceMap[i]["Specification"], sliceMap[i]["SingleCapacity"])*/
-				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], sliceMap[i]["AvailabilityZone"], "云存储", sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "GB", sliceMap[i]["SingleCapacity"], sliceMap[i]["Counts"]})
+			} else if sliceMap[i][ResourceSubcategory] == "对象存储" {
+				/*s := fmt.Sprintf("%v ,共享容量%vG", sliceMap[i][Specification], sliceMap[i][SingleCapacity])*/
+				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i][CloudPool], sliceMap[i][Node], sliceMap[i][AvailabilityZone], "云存储", sliceMap[i][ResourceSubcategory], sliceMap[i][Specification], "GB", sliceMap[i][SingleCapacity], sliceMap[i][Counts], "", sliceMap[i][ResourceApplicationBatch]})
 			} else {
 				//除了文件存储类型，默认输出
-				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], sliceMap[i]["AvailabilityZone"], "云存储", sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "GB", sliceMap[i]["Capacity"], sliceMap[i]["Counts"]})
+				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i][CloudPool], sliceMap[i][Node], sliceMap[i][AvailabilityZone], "云存储", sliceMap[i][ResourceSubcategory], sliceMap[i][Specification], "GB", sliceMap[i][Capacity], sliceMap[i][Counts], "", sliceMap[i][ResourceApplicationBatch]})
 			}
 
 		case "网络资源":
 			//主要处理网络资源中有些是没有规格的，如果没有规格则判断规格如果是NF则不打印规格的字段
-			if strings.Contains(sliceMap[i]["Specification"], "NF") {
-				sliceMap[i]["Specification"] = ""
+			if strings.Contains(sliceMap[i][Specification], "NF") {
+				sliceMap[i][Specification] = ""
 			}
-			if strings.Contains(sliceMap[i]["Bandwidth"], "NF") || sliceMap[i]["Bandwidth"] == "" {
-				sliceMap[i]["Bandwidth"] = ""
+			if strings.Contains(sliceMap[i][Bandwidth], "NF") || sliceMap[i][Bandwidth] == "" {
+				sliceMap[i][Bandwidth] = ""
 			} else {
-				sliceMap[i]["Bandwidth"] = fmt.Sprintf("%s Mbps", sliceMap[i]["Bandwidth"])
+				sliceMap[i][Bandwidth] = fmt.Sprintf("%s Mbps", sliceMap[i][Bandwidth])
 			}
-			err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], "", "云网络", sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "个", sliceMap[i]["Counts"], "", sliceMap[i]["Bandwidth"]})
+			err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i][CloudPool], sliceMap[i][Node], "", "云网络", sliceMap[i][ResourceSubcategory], sliceMap[i][Specification], "个", sliceMap[i][Counts], "", sliceMap[i][Bandwidth], sliceMap[i][ResourceApplicationBatch]})
 
 		case "安全资源":
-			if sliceMap[i]["AvailabilityZone"] == "" {
-				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], "", "云安全", sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "个", sliceMap[i]["Counts"]})
+			if sliceMap[i][AvailabilityZone] == "" {
+				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i][CloudPool], sliceMap[i][Node], "", "云安全", sliceMap[i][ResourceSubcategory], sliceMap[i][Specification], "个", sliceMap[i][Counts], "", "", sliceMap[i][ResourceApplicationBatch]})
 			} else {
-				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], sliceMap[i]["AvailabilityZone"], "云安全", sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "个", sliceMap[i]["Counts"]})
+				err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i][CloudPool], sliceMap[i][Node], sliceMap[i][AvailabilityZone], "云安全", sliceMap[i][ResourceSubcategory], sliceMap[i][Specification], "个", sliceMap[i][Counts], "", "", sliceMap[i][ResourceApplicationBatch]})
 			}
 
 		case "PAAS资源":
-			err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i]["CloudPool"], sliceMap[i]["Node"], sliceMap[i]["AvailabilityZone"], "PAAS", sliceMap[i]["ResourceSubcategory"], sliceMap[i]["Specification"], "个", sliceMap[i]["Counts"]})
+			err = f.SetSheetRow(sheetName, cell, &[]interface{}{sliceMap[i][CloudPool], sliceMap[i][Node], sliceMap[i][AvailabilityZone], "PAAS", sliceMap[i][ResourceSubcategory], sliceMap[i][Specification], "个", sliceMap[i][Counts], "", "", sliceMap[i][ResourceApplicationBatch]})
 		default:
 			logrus.Println("写入数据时没找到对应资源")
 		}
@@ -128,7 +128,7 @@ func WidthCalculation(rows [][]string, col int, n int) float64 {
 	}
 
 	//根据内容长度来算出大概的宽度
-	f = float64(count) * 0.75
+	f = float64(count) * 0.80
 	if f > 60 {
 		f = 60
 	}
@@ -170,7 +170,7 @@ func SetCollStyle(FileName string) {
 	//最前一列 默认是A  加上获取到的行数
 	ACell := fmt.Sprintf("A%d", ACellInt)
 	//最后一列 默认是J列 这里固定J列加上行数
-	JCell := fmt.Sprintf("J%d", len(rows))
+	JCell := fmt.Sprintf("K%d", len(rows))
 
 	//设置单元格边框范围 例如 [A7 ~ J30]
 	err = f.SetCellStyle("Sheet1", ACell, JCell, styleId)

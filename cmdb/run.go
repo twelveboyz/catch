@@ -56,7 +56,7 @@ func Run() {
 	fileName := internal.CMDBFilterFileName(root, "资源录入表", []string{"资源录入", "资源录入表"})
 
 	if fileName != "" {
-		resourceEntryExcel := NewExcel(fileName, SheetResourceEntry, 1)
+		resourceEntryExcel := NewExcel(fileName, "", 1)
 
 		resultExcel := NewExcel(countExcel, "Sheet1", 1)
 		resultExcel.GenerateStatisticalData(countExcel, resourceEntryExcel.ResourceStatistics())
@@ -68,7 +68,7 @@ func Run() {
 	securityFileName := internal.CMDBFilterFileName(root, "订购评审纪要", []string{"安全资源", "安全"})
 
 	if securityFileName != "" {
-		securityResourceExcel := NewExcel(securityFileName, SheetSecurityProduct, 3)
+		securityResourceExcel := NewExcel(securityFileName, "", 3)
 
 		resultExcel := NewExcel(countExcel, "Sheet1", 1)
 		resultExcel.GenerateStatisticalData(countExcel, securityResourceExcel.SecurityResourceStatistics())
